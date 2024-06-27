@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="parjson.cpp" />
     <ClCompile Include="parjson.h" />
     <ClCompile Include="test1.cpp" />
   </ItemGroup>

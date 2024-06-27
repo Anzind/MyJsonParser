@@ -1,6 +1,8 @@
 #ifndef PARJSON_H__
 #define PARJSON_H__
 
+
+
 //json类型的枚举
 typedef enum {
 	PAR_NULL, PAR_TRUE, PAR_FALSE, PAR_NUMBER, PAR_STRING, PAR_ARRAY, PAR_OBJECT
