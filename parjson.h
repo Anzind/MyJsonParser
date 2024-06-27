@@ -33,4 +33,6 @@ int parser(par_value* v, const char* json);
 
 par_type par_get_type(const par_value* v);
 
+double par_get_number(par_value* v, const char* json);
+
 #endif

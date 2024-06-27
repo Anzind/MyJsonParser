@@ -86,3 +86,9 @@ par_type par_get_type(const par_value* v)
     return v->type;
 }
 
+double par_get_number(par_value* v, const char* json)
+{
+
+    return 0.0;
+}
+
