@@ -21,23 +21,46 @@ enum {
 	PAR_OK = 0,
 	
 	//json只有含空白
-	PAR_EXPECT_VALUE,
+	PAR_EXPECT_VALUE = 1,
 	
 	//值是null，true，false以外的其他值
-	PAR_INVALID_VALUE,
+	PAR_INVALID_VALUE = 2,
 
 	//空白之后还有其他字符
-	PAR_ROOT_NOT_SINGULAR,
+	PAR_ROOT_NOT_SINGULAR = 3,
 
 	//待解析数字过大
-	PAR_NUMBER_TOO_BIG
+	PAR_NUMBER_TOO_BIG = 4,
+
+	//缺失引号
+	LEPT_PARSE_MISS_QUOTATION_MARK = 5,
+
+	//非法转义字符
+	LEPT_PARSE_INVALID_STRING_ESCAPE = 6,
+
+	//非法字符串
+	LEPT_PARSE_INVALID_STRING_CHAR = 7
 };
 
 //解析jsonAPI
+#define lept_init(v) do { (v)->type = LEPT_NULL; } while(0)
+
+#define lept_set_null(v) lept_free(v)
+
 int parser(par_value* v, const char* json);
 
 par_type par_get_type(const par_value* v);
 
+void lept_set_number(par_value* v, double n);
 double par_get_number(const par_value* v);
+
+int par_get_boolean(const par_value* v);
+void par_set_boolean(par_value* v, int b);
+
+const char* par_get_string(const par_value* v);
+size_t par_get_string_length(const par_value* v);
+void par_set_string(par_value* v, const char* s, size_t len);
+
+void par_free(par_value* v);
 
 #endif

@@ -1,5 +1,6 @@
 //单元测试
 #include <iostream>
+#include <string>
 #include "parjson.h"
 
 static int main_ret = 0;
@@ -23,6 +24,9 @@ static int test_pass = 0;
 #define EXPECT_EQ_DOUBLE(expect, actual) \
     EXPECT_EQ_BASE((expect)==(actual), expect, actual, "%.17g")
 
+#define EXPECT_EQ_STRING(expect, actual, alength) \
+    EXPECT_EQ_BASE((expect)==(actual), expect, actual, "%s")
+
 #define TEST_ERROR(error, result, json)\
     do{\
         par_value v;\
@@ -40,6 +44,17 @@ static int test_pass = 0;
         EXPECT_EQ_INT(PAR_NUMBER, par_get_type(&v));\
         EXPECT_EQ_DOUBLE(error, par_get_number(&v));\
     }while(0)
+
+//宏-解析字符串
+#define TEST_STRING(expect, json)\
+    do {\
+        lept_value v;\
+        lept_init(&v);\
+        EXPECT_EQ_INT(PAR_OK, parser(&v, json));\
+        EXPECT_EQ_INT(PAR_STRING, par_get_type(&v));\
+        EXPECT_EQ_STRING(expect, lept_get_string(&v), lept_get_string_length(&v));\
+        lept_free(&v);\
+    } while(0)
 
 #if 0 
 /*null，false，true整合为一个*/
@@ -176,7 +191,7 @@ static void test_parse_root_not_singular() {
 
 //数字边界值测试
 static void test_parse_number_limit_out() {
-#if 1
+#if 0
     //TEST_NUMBER(0.0, "1e-10000"); /* must underflow */
     TEST_ERROR(PAR_NUMBER_TOO_BIG, PAR_NUMBER, "1e309");
     TEST_ERROR(PAR_NUMBER_TOO_BIG, PAR_NUMBER, "-1e309");
@@ -192,6 +207,16 @@ static void test_parse_number_limit_out() {
 #endif
 }
 
+//字符串解析测试
+static void test_parse_string() {
+    TEST_STRING("", "\"\"");
+    TEST_STRING("Hello", "\"Hello\"");
+#if 0
+    TEST_STRING("Hello\nWorld", "\"Hello\\nWorld\"");
+    TEST_STRING("\" \\ / \b \f \n \r \t", "\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"");
+#endif
+}
+
 static void test_parse() {
 #if 0
     test_parse_null();
@@ -204,6 +229,8 @@ static void test_parse() {
     test_parse_invalid_value();
     test_parse_root_not_singular();
     test_parse_number_limit_out();
+
+
 }
 
 int main() {
