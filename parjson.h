@@ -1,7 +1,8 @@
 #ifndef PARJSON_H__
 #define PARJSON_H__
 
-
+#include<iostream>
+#include<string>
 
 //json类型的枚举
 typedef enum {
@@ -11,6 +12,7 @@ typedef enum {
 //json树节点
 typedef struct {
 	par_type type;
+	double num;
 } par_value;
 
 //解析返回枚举
@@ -25,7 +27,10 @@ enum {
 	PAR_INVALID_VALUE,
 
 	//空白之后还有其他字符
-	PAR_ROOT_NOT_SINGULAR
+	PAR_ROOT_NOT_SINGULAR,
+
+	//待解析数字过大
+	PAR_NUMBER_TOO_BIG
 };
 
 //解析jsonAPI
@@ -33,6 +38,6 @@ int parser(par_value* v, const char* json);
 
 par_type par_get_type(const par_value* v);
 
-double par_get_number(par_value* v, const char* json);
+double par_get_number(const par_value* v);
 
 #endif

@@ -35,11 +35,14 @@ static int test_pass = 0;
 #define TEST_NUMBER(error, json)\
     do{\
         par_value v;\
+        v.type = PAR_NULL;\
         EXPECT_EQ_INT(PAR_OK, parser(&v, json));\
         EXPECT_EQ_INT(PAR_NUMBER, par_get_type(&v));\
-        EXPECT_EQ_DOUBLE(error, par_get_number());\
+        EXPECT_EQ_DOUBLE(error, par_get_number(&v));\
     }while(0)
 
+#if 0 
+/*null，false，true整合为一个*/
 //测试null解析
 static void test_parse_null() {
 #if 0
@@ -75,10 +78,36 @@ static void test_parse_false() {
     TEST_ERROR(PAR_OK, PAR_FALSE, "false");
 #endif
 }
+#endif
+
+static void test_parse_bool() {
+#if 0
+    TEST_ERROR(PAR_OK, PAR_NULL, "null");
+    TEST_ERROR(PAR_OK, PAR_TRUE, "true");
+    TEST_ERROR(PAR_OK, PAR_FALSE, "false");
+#endif
+}
 
 static void test_parse_number() {
 #if 0
-    
+    TEST_NUMBER(0.0, "0");
+    TEST_NUMBER(0.0, "-0");
+    TEST_NUMBER(0.0, "-0.0");
+    TEST_NUMBER(1.0, "1");
+    TEST_NUMBER(-1.0, "-1");
+    TEST_NUMBER(1.5, "1.5");
+    TEST_NUMBER(-1.5, "-1.5");
+    TEST_NUMBER(3.1416, "3.1416");
+    TEST_NUMBER(1E10, "1E10");
+    TEST_NUMBER(1e10, "1e10");
+    TEST_NUMBER(1E+10, "1E+10");
+    TEST_NUMBER(1E-10, "1E-10");
+    TEST_NUMBER(-1E10, "-1E10");
+    TEST_NUMBER(-1e10, "-1e10");
+    TEST_NUMBER(-1E+10, "-1E+10");
+    TEST_NUMBER(-1E-10, "-1E-10");
+    TEST_NUMBER(1.234E+10, "1.234E+10");
+    TEST_NUMBER(1.234E-10, "1.234E-10");
 #endif
 }
 
@@ -99,7 +128,7 @@ static void test_parse_expect_value() {
 }
 
 static void test_parse_invalid_value() {
-#if 0
+#if 0 
     /*par_value v;
     v.type = PAR_FALSE;
     EXPECT_EQ_INT(PAR_INVALID_VALUE, parser(&v, "nul"));
@@ -108,8 +137,22 @@ static void test_parse_invalid_value() {
     v.type = PAR_FALSE;
     EXPECT_EQ_INT(PAR_INVALID_VALUE, parser(&v, "?"));
     EXPECT_EQ_INT(PAR_NULL, par_get_type(&v));*/
+    /*测试bool合法*/
     TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "nul");
     TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "?");
+#endif
+
+#if 0
+    /*测试数字合法*/
+    /* invalid number */
+    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "+0");
+    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "+1");
+    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, ".123"); /* at least one digit before '.' */
+    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "1.");   /* at least one digit after '.' */
+    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "INF");
+    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "inf");
+    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "NAN");
+    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "nan");
 #endif
 }
 
@@ -121,17 +164,46 @@ static void test_parse_root_not_singular() {
     EXPECT_EQ_INT(PAR_NULL, par_get_type(&v));*/
     TEST_ERROR(PAR_ROOT_NOT_SINGULAR, PAR_NULL, "null x");
 #endif
+
+#if 0
+    /*校验数字合法*/
+    /* invalid number */
+    TEST_ERROR(PAR_ROOT_NOT_SINGULAR, PAR_NUMBER, "0123"); /* after zero should be '.' or nothing */
+    TEST_ERROR(PAR_ROOT_NOT_SINGULAR, PAR_NUMBER, "0x0");
+    TEST_ERROR(PAR_ROOT_NOT_SINGULAR, PAR_NUMBER, "0x123");
+#endif
+}
+
+//数字边界值测试
+static void test_parse_number_limit_out() {
+#if 1
+    //TEST_NUMBER(0.0, "1e-10000"); /* must underflow */
+    TEST_ERROR(PAR_NUMBER_TOO_BIG, PAR_NUMBER, "1e309");
+    TEST_ERROR(PAR_NUMBER_TOO_BIG, PAR_NUMBER, "-1e309");
+    TEST_NUMBER(1.0000000000000002, "1.0000000000000002"); /* the smallest number > 1 */
+    TEST_NUMBER(4.9406564584124654e-324, "4.9406564584124654e-324"); /* minimum denormal */
+    TEST_NUMBER(-4.9406564584124654e-324, "-4.9406564584124654e-324");
+    TEST_NUMBER(2.2250738585072009e-308, "2.2250738585072009e-308");  /* Max subnormal double */
+    TEST_NUMBER(-2.2250738585072009e-308, "-2.2250738585072009e-308");
+    TEST_NUMBER(2.2250738585072014e-308, "2.2250738585072014e-308");  /* Min normal positive double */
+    TEST_NUMBER(-2.2250738585072014e-308, "-2.2250738585072014e-308");
+    TEST_NUMBER(1.7976931348623157e+308, "1.7976931348623157e+308");  /* Max double */
+    TEST_NUMBER(-1.7976931348623157e+308, "-1.7976931348623157e+308");
+#endif
 }
 
 static void test_parse() {
+#if 0
     test_parse_null();
     test_parse_true();
     test_parse_false();
+#endif
+    test_parse_bool();
     test_parse_number();
     test_parse_expect_value();
     test_parse_invalid_value();
     test_parse_root_not_singular();
-    test_parse_number_too_big();
+    test_parse_number_limit_out();
 }
 
 int main() {
