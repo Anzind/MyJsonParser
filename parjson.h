@@ -6,13 +6,26 @@
 
 //json类型的枚举
 typedef enum {
-	PAR_NULL, PAR_TRUE, PAR_FALSE, PAR_NUMBER, PAR_STRING, PAR_ARRAY, PAR_OBJECT
+	PAR_NULL = 0,
+	PAR_TRUE = 1,
+	PAR_FALSE = 2,
+	PAR_NUMBER = 3,
+	PAR_STRING = 4,
+	PAR_ARRAY = 5,
+	PAR_OBJECT = 6
 } par_type;
 
 //json树节点
 typedef struct {
+	union {
+		//当该项为字符串时用这个结构
+		std::string str;
+
+		//当该项为数字时用这个
+		double num;
+	};
+
 	par_type type;
-	double num;
 } par_value;
 
 //解析返回枚举
@@ -51,16 +64,14 @@ int parser(par_value* v, const char* json);
 
 par_type par_get_type(const par_value* v);
 
-void lept_set_number(par_value* v, double n);
-double par_get_number(const par_value* v);
+void par_free(par_value* v);
 
 int par_get_boolean(const par_value* v);
-void par_set_boolean(par_value* v, int b);
 
-const char* par_get_string(const par_value* v);
-size_t par_get_string_length(const par_value* v);
-void par_set_string(par_value* v, const char* s, size_t len);
+void par_set_number(par_value* v, double n);
+double par_get_number(const par_value* v);
 
-void par_free(par_value* v);
+std::string par_get_string(const par_value* v);
+void par_set_string(par_value* v, std::string s);
 
 #endif
