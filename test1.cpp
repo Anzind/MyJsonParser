@@ -1,10 +1,10 @@
-//µ¥Ôª²âÊÔ
+ï»¿//å•å…ƒæµ‹è¯•
 #include <iostream>
 #include <iomanip>
 #include <string>
 #include "parjson.h"
 
-//ÄÚ´æĞ¹Â¶¼ì²â
+//å†…å­˜æ³„éœ²æ£€æµ‹
 #ifdef _WINDOWS
 #define _CRTDBG_MAP_ALLOC
 #include<crtdbg.h>
@@ -14,13 +14,13 @@ static int main_ret = 0;
 static int test_count = 0;
 static int test_pass = 0;
 
-/*  ¶¨Òå»ù´¡ºê
-	Èë²Î£º
-		expect->Ô¤ÆÚ½á¹û
-		actual->Êµ¼Ê½á¹û
-	ĞèÒªĞ£Ñé£º
-		½âÎöÊÇ·ñ³É¹¦
-		½âÎöºóÀàĞÍÊÇ·ñÕıÈ·
+/*  å®šä¹‰åŸºç¡€å®
+	å…¥å‚ï¼š
+		expect->é¢„æœŸç»“æœ
+		actual->å®é™…ç»“æœ
+	éœ€è¦æ ¡éªŒï¼š
+		è§£ææ˜¯å¦æˆåŠŸ
+		è§£æåç±»å‹æ˜¯å¦æ­£ç¡®
 */
 #define EXPECT_EQ_BASE(expect, actual)\
 	do{\
@@ -33,13 +33,13 @@ static int test_pass = 0;
 		}\
 	}while(0)
 
-/*  ¶¨Òå»ù´¡ºê-×Ö·û´®×¨ÓÃ
-	Èë²Î£º
-		expect->Ô¤ÆÚ½á¹û
-		actual->Êµ¼Ê½á¹û
-	ĞèÒªĞ£Ñé£º
-		½âÎöÊÇ·ñ³É¹¦
-		½âÎöºóÀàĞÍÊÇ·ñÕıÈ·
+/*  å®šä¹‰åŸºç¡€å®-å­—ç¬¦ä¸²ä¸“ç”¨
+	å…¥å‚ï¼š
+		expect->é¢„æœŸç»“æœ
+		actual->å®é™…ç»“æœ
+	éœ€è¦æ ¡éªŒï¼š
+		è§£ææ˜¯å¦æˆåŠŸ
+		è§£æåç±»å‹æ˜¯å¦æ­£ç¡®
 */
 #define EXPECT_EQ_BASE_STRING(expect, actual)\
 	do{\
@@ -53,12 +53,12 @@ static int test_pass = 0;
 		}\
 	}while(0)
 
-/*	¶¨Òå½ø½×ºê£ºÒì³£´¦Àí¼ì²â
-	Èë²Î£º
-		expect->Ô¤ÆÚ½á¹û
-		json->´ı½âÎöµÄ×Ö·û´®
-	ĞèÒªĞ£Ñé£º
-		½âÎöÊ§°ÜµÄ´íÎóÃ¶¾ÙÊÇ·ñÕıÈ·
+/*	å®šä¹‰è¿›é˜¶å®ï¼šå¼‚å¸¸å¤„ç†æ£€æµ‹
+	å…¥å‚ï¼š
+		expect->é¢„æœŸç»“æœ
+		json->å¾…è§£æçš„å­—ç¬¦ä¸²
+	éœ€è¦æ ¡éªŒï¼š
+		è§£æå¤±è´¥çš„é”™è¯¯æšä¸¾æ˜¯å¦æ­£ç¡®
 */
 #define TEST_ERROR(expect, json)\
 	do{\
@@ -67,14 +67,14 @@ static int test_pass = 0;
 		EXPECT_EQ_BASE(expect, parser(&v, json));\
 	}while(0)
 
-/*	¶¨Òå½ø½×ºê£ºÊı×ÖÖµ¼ì²â
-	Èë²Î£º
-		expect->Ô¤ÆÚ½á¹û
-		json->´ı½âÎöµÄ×Ö·û´®
-	ĞèÒªĞ£Ñé£º
-		½âÎöÊÇ·ñ³É¹¦
-		½âÎöºóÀàĞÍÊÇ·ñÕıÈ·
-		½âÎö³öÀ´µÄÊı×ÖÊÇ·ñÕıÈ·
+/*	å®šä¹‰è¿›é˜¶å®ï¼šæ•°å­—å€¼æ£€æµ‹
+	å…¥å‚ï¼š
+		expect->é¢„æœŸç»“æœ
+		json->å¾…è§£æçš„å­—ç¬¦ä¸²
+	éœ€è¦æ ¡éªŒï¼š
+		è§£ææ˜¯å¦æˆåŠŸ
+		è§£æåç±»å‹æ˜¯å¦æ­£ç¡®
+		è§£æå‡ºæ¥çš„æ•°å­—æ˜¯å¦æ­£ç¡®
 */
 #define TEST_NUMBER(expect, json)\
 	do{\
@@ -85,14 +85,14 @@ static int test_pass = 0;
 		EXPECT_EQ_BASE(expect, par_get_number(&v));\
 	}while(0)
 
-/*	¶¨Òå½ø½×ºê£º×Ö·û´®Öµ¼ì²â
-	Èë²Î£º
-		expect->Ô¤ÆÚ½á¹û
-		json->´ı½âÎöµÄ×Ö·û´®
-	ĞèÒªĞ£Ñé£º
-		½âÎöÊÇ·ñ³É¹¦
-		½âÎöºóÀàĞÍÊÇ·ñÕıÈ·
-		½âÎö³öÀ´µÄ×Ö·û´®ÊÇ·ñÕıÈ·
+/*	å®šä¹‰è¿›é˜¶å®ï¼šå­—ç¬¦ä¸²å€¼æ£€æµ‹
+	å…¥å‚ï¼š
+		expect->é¢„æœŸç»“æœ
+		json->å¾…è§£æçš„å­—ç¬¦ä¸²
+	éœ€è¦æ ¡éªŒï¼š
+		è§£ææ˜¯å¦æˆåŠŸ
+		è§£æåç±»å‹æ˜¯å¦æ­£ç¡®
+		è§£æå‡ºæ¥çš„å­—ç¬¦ä¸²æ˜¯å¦æ­£ç¡®
 */
 #define TEST_STRING(expect, json)\
 	do{\
@@ -103,19 +103,19 @@ static int test_pass = 0;
 		EXPECT_EQ_BASE_STRING(expect, par_get_string(&v));\
 	}while(0)
 
-//²âÊÔnullÖµ½âÎöÕıÈ·
+//æµ‹è¯•nullå€¼è§£ææ­£ç¡®
 static void test_parse_null() {
 #if 0 
 	par_value v;
 	v.type = PAR_NULL;
-	
+
 	EXPECT_EQ_BASE(PAR_OK, parser(&v, "null"));
 	EXPECT_EQ_BASE(PAR_NULL, par_get_type(&v));
 	par_free(&v);
 #endif
 }
 
-//²âÊÔtrueÖµ½âÎöÕıÈ·
+//æµ‹è¯•trueå€¼è§£ææ­£ç¡®
 static void test_parse_true() {
 #if 0
 	par_value v;
@@ -127,7 +127,7 @@ static void test_parse_true() {
 #endif
 }
 
-//²âÊÔfalseÖµ½âÎöÕıÈ·
+//æµ‹è¯•falseå€¼è§£ææ­£ç¡®
 static void test_parse_false() {
 #if 0
 	par_value v;
@@ -139,7 +139,7 @@ static void test_parse_false() {
 #endif
 }
 
-//²âÊÔÊı×ÖÖµ½âÎöÕıÈ·
+//æµ‹è¯•æ•°å­—å€¼è§£ææ­£ç¡®
 static void test_parse_number() {
 #if 0
 	TEST_NUMBER(0.0, "0");
@@ -161,9 +161,22 @@ static void test_parse_number() {
 	TEST_NUMBER(1.234E+10, "1.234E+10");
 	TEST_NUMBER(1.234E-10, "1.234E-10");
 #endif
+
+#if 0
+	/*æç«¯æƒ…å†µ*/
+	TEST_NUMBER(1.0000000000000002, "1.0000000000000002"); /* the smallest number > 1 */
+	TEST_NUMBER(4.9406564584124654e-324, "4.9406564584124654e-324"); /* minimum denormal */
+	TEST_NUMBER(-4.9406564584124654e-324, "-4.9406564584124654e-324");
+	TEST_NUMBER(2.2250738585072009e-308, "2.2250738585072009e-308");  /* Max subnormal double */
+	TEST_NUMBER(-2.2250738585072009e-308, "-2.2250738585072009e-308");
+	TEST_NUMBER(2.2250738585072014e-308, "2.2250738585072014e-308");  /* Min normal positive double */
+	TEST_NUMBER(-2.2250738585072014e-308, "-2.2250738585072014e-308");
+	TEST_NUMBER(1.7976931348623157e+308, "1.7976931348623157e+308");  /* Max double */
+	TEST_NUMBER(-1.7976931348623157e+308, "-1.7976931348623157e+308");
+#endif
 }
 
-//²âÊÔjsonÈ«Îª¿ÕÖµµÄÒì³£
+//æµ‹è¯•jsonå…¨ä¸ºç©ºå€¼çš„å¼‚å¸¸
 static void test_parse_expect_value() {
 #if 0
 	TEST_ERROR(PAR_EXPECT_VALUE, "");
@@ -171,16 +184,16 @@ static void test_parse_expect_value() {
 #endif
 }
 
-//²âÊÔjsonÖĞµÄÒì³£Öµ£¨Õû¸ö¶¼ÊÇ´íµÄ£¬½âÎö²»ÁËÒ»µãÊı¾İ£©
+//æµ‹è¯•jsonä¸­çš„å¼‚å¸¸å€¼ï¼ˆæ•´ä¸ªéƒ½æ˜¯é”™çš„ï¼Œè§£æä¸äº†ä¸€ç‚¹æ•°æ®ï¼‰
 static void test_parse_invalid_value() {
 #if 0
-	/*ÆäËûÖµÒì³£*/
+	/*å…¶ä»–å€¼å¼‚å¸¸*/
 	TEST_ERROR(PAR_INVALID_VALUE, "nul");
 	TEST_ERROR(PAR_INVALID_VALUE, "?");
 #endif
 
 #if 0
-	/* Êı×ÖÖµÒì³£ */
+	/* æ•°å­—å€¼å¼‚å¸¸ */
 	TEST_ERROR(PAR_INVALID_VALUE, "+0");
 	TEST_ERROR(PAR_INVALID_VALUE, "+1");
 	TEST_ERROR(PAR_INVALID_VALUE, ".123"); /* at least one digit before '.' */
@@ -192,22 +205,22 @@ static void test_parse_invalid_value() {
 #endif
 }
 
-//²âÊÔjsonÖĞµÄ´íÎóÖµ£¨ÄÜ½âÎö³öÀ´Êı¾İ£¬µ«ÊÇÓĞ´íÎóµÄµØ·½£©
+//æµ‹è¯•jsonä¸­çš„é”™è¯¯å€¼ï¼ˆèƒ½è§£æå‡ºæ¥æ•°æ®ï¼Œä½†æ˜¯æœ‰é”™è¯¯çš„åœ°æ–¹ï¼‰
 static void test_parse_root_not_singular() {
 #if 0
-	/*´íÎóµÄÆäËûÖµ*/
+	/*é”™è¯¯çš„å…¶ä»–å€¼*/
 	TEST_ERROR(PAR_ROOT_NOT_SINGULAR, "null x");
 #endif
 
 #if 0
-	/* ´íÎóÊı×ÖÖµ */
+	/* é”™è¯¯æ•°å­—å€¼ */
 	TEST_ERROR(PAR_ROOT_NOT_SINGULAR, "0123"); /* after zero should be '.' or nothing */
 	TEST_ERROR(PAR_ROOT_NOT_SINGULAR, "0x0");
 	TEST_ERROR(PAR_ROOT_NOT_SINGULAR, "0x123");
 #endif
 }
 
-//²âÊÔÊı×Ö½âÎöÔ½½ç
+//æµ‹è¯•æ•°å­—è§£æè¶Šç•Œ
 static void test_parse_number_too_big() {
 #if 0
 	TEST_ERROR(PAR_NUMBER_TOO_BIG, "1e309");
@@ -215,14 +228,43 @@ static void test_parse_number_too_big() {
 #endif
 }
 
-//²âÊÔ×Ö·û´®½âÎö½á¹û
+//æµ‹è¯•å­—ç¬¦ä¸²è§£æç»“æœ
 static void test_parse_string() {
-#if 1
-
-#if 1
-	TEST_STRING("", "\"\"");
-#endif
 #if 0
+
+#if 0
+	/*å®å±•å¼€*/
+
+	par_value v;
+	v.type = PAR_NULL;
+	test_count++;
+	if (PAR_OK == parser(&v, "\"\""))
+		test_pass++;
+	else {
+		std::cout << "D:\\CppProject\\MyJsonParser\\test1.cpp" << ":" << 223 << ", expect:" << PAR_OK << ", actual:" << parser(&v, "\"\"") << std::endl;
+		main_ret = 1;
+	}
+
+	test_count++;
+	if (PAR_STRING == par_get_type(&v))
+		test_pass++;
+	else {
+		std::cout << "D:\\CppProject\\MyJsonParser\\test1.cpp" << ":" << 223 << ", expect:" << PAR_STRING << ", actual:" << par_get_type(&v) << std::endl;
+		main_ret = 1;
+	}
+
+	test_count++;
+	const char* temp = par_get_string(&v);
+	if (std::strcmp("", temp) == 0)
+		test_pass++;
+	else {
+		std::cout << "D:\\CppProject\\MyJsonParser\\test1.cpp" << ":" << 223 << ", expect:" << "" << ", actual:" << temp << std::endl;
+		main_ret = 1;
+	}
+#endif
+
+#if 0
+	TEST_STRING("", "\"\"");
 	TEST_STRING("Hello", "\"Hello\"");
 	TEST_STRING("Hello\nWorld", "\"Hello\\nWorld\"");
 	TEST_STRING("\" \\ / \b \f \n \r \t", "\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"");
@@ -230,53 +272,92 @@ static void test_parse_string() {
 #endif
 }
 
+//æµ‹è¯•å­—ç¬¦ä¸²ä¸¢å¤±åŒå¼•å·å¼‚å¸¸
+static void test_parse_missing_quotation_mark() {
+#if 0
+	TEST_ERROR(PAR_MISS_QUOTATION_MARK, "\"");
+	TEST_ERROR(PAR_MISS_QUOTATION_MARK, "\"abc");
+#endif
+}
+
+//æµ‹è¯•å­—ç¬¦ä¸²éæ³•è½¬ä¹‰å­—ç¬¦å¼‚å¸¸
+static void test_parse_invalid_string_escape() {
+#if 0
+	TEST_ERROR(PAR_INVALID_STRING_ESCAPE, "\"\\v\"");
+	TEST_ERROR(PAR_INVALID_STRING_ESCAPE, "\"\\'\"");
+	TEST_ERROR(PAR_INVALID_STRING_ESCAPE, "\"\\0\"");
+	TEST_ERROR(PAR_INVALID_STRING_ESCAPE, "\"\\x12\"");
+#endif
+}
+
+//æµ‹è¯•å­—ç¬¦ä¸²éæ³•å­—ç¬¦å¼‚å¸¸
+static void test_parse_invalid_string_char() {
+#if 0
+	TEST_ERROR(PAR_INVALID_STRING_CHAR, "\"\x01\"");
+	TEST_ERROR(PAR_INVALID_STRING_CHAR, "\"\x1F\"");
+#endif
+}
+
 static void test_parse() {
 #if 0
-	/*²âÊÔboolÖµÓënullÖµ*/
+	/*æµ‹è¯•boolå€¼ä¸nullå€¼*/
 	test_parse_null();
 	test_parse_true();
 	test_parse_false();
 #endif
 
 #if 0
-	/*²âÊÔÊı×ÖÖµ*/
+	/*æµ‹è¯•æ•°å­—å€¼*/
 	test_parse_number();
 
-	/*²âÊÔÊı×Ö½âÎöÔ½½ç*/
+	/*æµ‹è¯•æ•°å­—è§£æè¶Šç•Œ*/
 	test_parse_number_too_big();
 #endif
 
 #if 0
-	/*¿ÕÖµÒì³£·µ»Ø²âÊÔ*/
+#if 1
+	/*ç©ºå€¼å¼‚å¸¸è¿”å›æµ‹è¯•*/
 	test_parse_expect_value();
 #endif
-
-#if 0
-	/*²âÊÔjsonÖĞµÄÒì³£Öµ*/
+#if 1
+	/*æµ‹è¯•jsonä¸­çš„å¼‚å¸¸å€¼*/
 	test_parse_invalid_value();
 #endif
-
-#if 0
-	/*²âÊÔ´íÎóÖµ*/
+#if 1
+	/*æµ‹è¯•é”™è¯¯å€¼*/
 	test_parse_root_not_singular();
 #endif
+#endif
 
+#if 0
 #if 1
-	/*²âÊÔ×Ö·û´®½âÎö½á¹û*/
+	/*æµ‹è¯•å­—ç¬¦ä¸²è§£æç»“æœ*/
 	test_parse_string();
+#endif
+#if 1
+	/*æµ‹è¯•å­—ç¬¦ä¸²ä¸¢å¤±åŒå¼•å·å¼‚å¸¸*/
+	test_parse_missing_quotation_mark();
+#endif
+#if 1
+	/*æµ‹è¯•å­—ç¬¦ä¸²éæ³•è½¬ä¹‰å­—ç¬¦å¼‚å¸¸*/
+	test_parse_invalid_string_escape();
+#endif
+#if 1
+	test_parse_invalid_string_char();
+#endif
 #endif
 }
 
 int main() {
 #ifdef _WINDOWS
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
 	test_parse();
-	float percent = test_pass * 100 / test_count;
+	float percent = test_pass * 100 / (float)test_count;
 	std::cout << std::fixed << std::setprecision(2);
-	std::cout << "½á¹û£º" << test_pass << " / " << test_count
-			<< "\nÍ¨¹ıÂÊ£º" << percent << "%" << std::endl;
+	std::cout << "ç»“æœï¼š" << test_pass << " / " << test_count
+		<< "\né€šè¿‡ç‡ï¼š" << percent << "%" << std::endl;
 
 	return main_ret;
 }

@@ -1,10 +1,10 @@
-#ifndef PARJSON_H__
+ï»¿#ifndef PARJSON_H__
 #define PARJSON_H__
 
 #include<iostream>
 #include<string>
 
-//jsonÀàĞÍµÄÃ¶¾Ù
+//jsonç±»å‹çš„æšä¸¾
 typedef enum {
 	PAR_NULL = 0,
 	PAR_TRUE = 1,
@@ -15,47 +15,47 @@ typedef enum {
 	PAR_OBJECT = 6
 } par_type;
 
-//jsonÊ÷½Úµã
+//jsonæ ‘èŠ‚ç‚¹
 typedef struct {
 	union {
 		struct {
 			char* c_str;
 			size_t len;
 		}str;
-		//µ±¸ÃÏîÎªÊı×ÖÊ±ÓÃÕâ¸ö
+		//å½“è¯¥é¡¹ä¸ºæ•°å­—æ—¶ç”¨è¿™ä¸ª
 		double num;
 	};
 	par_type type;
 } par_value;
 
-//½âÎö·µ»ØÃ¶¾Ù
+//è§£æè¿”å›æšä¸¾
 enum {
-	//½âÎö³É¹¦
+	//è§£ææˆåŠŸ
 	PAR_OK = 0,
-	
-	//jsonÖ»ÓĞº¬¿Õ°×
+
+	//jsonåªæœ‰å«ç©ºç™½
 	PAR_EXPECT_VALUE = 1,
-	
-	//ÖµÊÇnull£¬true£¬falseÒÔÍâµÄÆäËûÖµ
+
+	//å€¼æ˜¯nullï¼Œtrueï¼Œfalseä»¥å¤–çš„å…¶ä»–å€¼
 	PAR_INVALID_VALUE = 2,
 
-	//¿Õ°×Ö®ºó»¹ÓĞÆäËû×Ö·û
+	//ç©ºç™½ä¹‹åè¿˜æœ‰å…¶ä»–å­—ç¬¦
 	PAR_ROOT_NOT_SINGULAR = 3,
 
-	//´ı½âÎöÊı×Ö¹ı´ó
+	//å¾…è§£ææ•°å­—è¿‡å¤§
 	PAR_NUMBER_TOO_BIG = 4,
 
-	//È±Ê§ÒıºÅ
-	LEPT_PARSE_MISS_QUOTATION_MARK = 5,
+	//ç¼ºå¤±å¼•å·
+	PAR_MISS_QUOTATION_MARK = 5,
 
-	//·Ç·¨×ªÒå×Ö·û
-	LEPT_PARSE_INVALID_STRING_ESCAPE = 6,
+	//éæ³•è½¬ä¹‰å­—ç¬¦
+	PAR_INVALID_STRING_ESCAPE = 6,
 
-	//·Ç·¨×Ö·û´®
-	LEPT_PARSE_INVALID_STRING_CHAR = 7
+	//éæ³•å­—ç¬¦
+	PAR_INVALID_STRING_CHAR = 7
 };
 
-//½âÎöjsonAPI
+//è§£æjsonAPI
 #define par_set_null(v) par_free(v)
 
 int parser(par_value* v, const char* json);
@@ -70,6 +70,6 @@ void par_set_number(par_value* v, double n);
 double par_get_number(const par_value* v);
 
 const char* par_get_string(const par_value* v);
-void par_set_string(par_value* v, std::string s);
+void par_set_string(par_value* v, char* s);
 
 #endif
