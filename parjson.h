@@ -18,13 +18,13 @@ typedef enum {
 //json树节点
 typedef struct {
 	union {
-		//当该项为字符串时用这个结构
-		std::string str;
-
+		struct {
+			char* c_str;
+			size_t len;
+		}str;
 		//当该项为数字时用这个
 		double num;
 	};
-
 	par_type type;
 } par_value;
 
@@ -56,9 +56,7 @@ enum {
 };
 
 //解析jsonAPI
-#define lept_init(v) do { (v)->type = LEPT_NULL; } while(0)
-
-#define lept_set_null(v) lept_free(v)
+#define par_set_null(v) par_free(v)
 
 int parser(par_value* v, const char* json);
 
@@ -71,7 +69,7 @@ int par_get_boolean(const par_value* v);
 void par_set_number(par_value* v, double n);
 double par_get_number(const par_value* v);
 
-std::string par_get_string(const par_value* v);
+const char* par_get_string(const par_value* v);
 void par_set_string(par_value* v, std::string s);
 
 #endif

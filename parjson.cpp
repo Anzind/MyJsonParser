@@ -1,6 +1,15 @@
+#ifndef PARJSON_CPP__
+#define PARJSON_CPP__
 #include "parjson.h"
 #include <cassert>
 #include <vector>
+#endif // !1
+
+//内存泄露检测
+#ifdef _WINDOWS
+#define _CRTDBG_MAP_ALLOC
+#include<crtdbg.h>
+#endif
 
 #define EXPECT(c,ch) \
 do{\
@@ -140,7 +149,7 @@ double par_get_number(const par_value* v)
 }
 
 static std::string par_string_pop(par_context* c) {
-    int len = c->s.size();
+    size_t len = c->s.size();
     char* c_str = new char[len+1];
     char* p = c_str;
 
@@ -158,21 +167,40 @@ static std::string par_string_pop(par_context* c) {
 
 //解析字符串
 static int par_string(par_context* c, par_value* v) {
-    int i = 1;
-    std::string s_temp = std::string(c->json);
+    const char* p = nullptr;
+    EXPECT(c, '\"');
 
-    for (; i < s_temp.size(); i++) {
-        char ch = s_temp[i];
+    p = c->json;
+
+    for (;;) {
+        char ch = *p++;
         switch (ch) {
         case '\"': {
             //碰到了双引号，代表字符串结束
             std::string chs = par_string_pop(c);
             par_set_string(v, chs);
-            c->json += chs.size();
+            c->json = p;
             return PAR_OK;
             }
+        case '\\': {
+            switch (*p++) {
+            case '\"': c->s.push_back('\"'); break;
+            case '\\': c->s.push_back('\\'); break;
+            case '/': c->s.push_back('/'); break;
+            case 'b': c->s.push_back('\b'); break;
+            case '\f': c->s.push_back('\f'); break;
+            case '\n': c->s.push_back('\n'); break;
+            case '\r': c->s.push_back('\r'); break;
+            case '\t': c->s.push_back('\t'); break;
+            default: return LEPT_PARSE_INVALID_STRING_ESCAPE;
+            }
+            break;
+            }
         case '\0': return LEPT_PARSE_MISS_QUOTATION_MARK;
-        default: c->s.push_back(ch);
+        default: {
+            if ((unsigned char)ch < 0x20) return LEPT_PARSE_INVALID_STRING_CHAR;
+            c->s.push_back(ch);
+            }
         }
     }
 }
@@ -180,13 +208,15 @@ static int par_string(par_context* c, par_value* v) {
 void par_set_string(par_value* v, std::string s) {
     assert(v != NULL);
     par_free(v);
-    v->str = s;
+    v->str.c_str = (char*)s.c_str();
+    v->str.len = s.size();
     v->type = PAR_STRING;
 }
 
-std::string par_get_string(const par_value* v) {
+const char* par_get_string(const par_value* v) {
+    std::cout << "来了奥3" << std::endl;
     assert(v != NULL && v->type == PAR_STRING);
-    return v->str;
+    return v->str.c_str;
 }
 
 static int par_fun_value(par_context* c, par_value* v) {
@@ -202,6 +232,8 @@ static int par_fun_value(par_context* c, par_value* v) {
 
 int parser(par_value* v, const char* json)
 {
+    std::cout << "来了奥1" << std::endl;
+
     par_context c;
     int ret;
 
@@ -222,13 +254,23 @@ int parser(par_value* v, const char* json)
 
 par_type par_get_type(const par_value* v)
 {
+    std::cout << "来了奥2" << std::endl;
+
     assert(v != NULL);
     return v->type;
 }
 
 void par_free(par_value* v){
     assert(v != NULL);
-    if (v->type == PAR_STRING) v->str = std::string();
+    if (v->type == PAR_STRING) {
+        if (v->str.len == 0) {
+            v->str.c_str = nullptr;
+        }
+        else {
+            delete[] v->str.c_str;
+            v->str.len = 0;
+        }
+    }
     v->type = PAR_NULL;
 }
 

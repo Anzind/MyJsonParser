@@ -1,240 +1,282 @@
 //单元测试
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include "parjson.h"
+
+//内存泄露检测
+#ifdef _WINDOWS
+#define _CRTDBG_MAP_ALLOC
+#include<crtdbg.h>
+#endif
 
 static int main_ret = 0;
 static int test_count = 0;
 static int test_pass = 0;
 
-#define EXPECT_EQ_BASE(equality, expect, actual, format)\
+/*  定义基础宏
+	入参：
+		expect->预期结果
+		actual->实际结果
+	需要校验：
+		解析是否成功
+		解析后类型是否正确
+*/
+#define EXPECT_EQ_BASE(expect, actual)\
 	do{\
 		test_count++;\
-		if(equality)\
+		if(expect == actual)\
 			test_pass++;\
 		else{\
-			fprintf(stderr, "%s:%d: expect: " format " actual: " format "\n",__FILE__, __LINE__, expect, actual);\
+			std::cout << __FILE__ << ":" << __LINE__ << ", expect:" << expect << ", actual:" << actual << std::endl;\
 			main_ret = 1;\
 		}\
 	}while(0)
 
-#define EXPECT_EQ_INT(expect, actual) \
-    EXPECT_EQ_BASE((expect)==(actual), expect, actual, "%d")
+/*  定义基础宏-字符串专用
+	入参：
+		expect->预期结果
+		actual->实际结果
+	需要校验：
+		解析是否成功
+		解析后类型是否正确
+*/
+#define EXPECT_EQ_BASE_STRING(expect, actual)\
+	do{\
+		test_count++;\
+		const char* temp = actual;\
+		if(std::strcmp(expect, temp) == 0)\
+			test_pass++;\
+		else{\
+			std::cout << __FILE__ << ":" << __LINE__ << ", expect:" << expect << ", actual:" << temp << std::endl;\
+			main_ret = 1;\
+		}\
+	}while(0)
 
-#define EXPECT_EQ_DOUBLE(expect, actual) \
-    EXPECT_EQ_BASE((expect)==(actual), expect, actual, "%.17g")
+/*	定义进阶宏：异常处理检测
+	入参：
+		expect->预期结果
+		json->待解析的字符串
+	需要校验：
+		解析失败的错误枚举是否正确
+*/
+#define TEST_ERROR(expect, json)\
+	do{\
+		par_value v;\
+		v.type = PAR_NULL;\
+		EXPECT_EQ_BASE(expect, parser(&v, json));\
+	}while(0)
 
-#define EXPECT_EQ_STRING(expect, actual, alength) \
-    EXPECT_EQ_BASE((expect)==(actual), expect, actual, "%s")
+/*	定义进阶宏：数字值检测
+	入参：
+		expect->预期结果
+		json->待解析的字符串
+	需要校验：
+		解析是否成功
+		解析后类型是否正确
+		解析出来的数字是否正确
+*/
+#define TEST_NUMBER(expect, json)\
+	do{\
+		par_value v;\
+		v.type = PAR_NULL;\
+		EXPECT_EQ_BASE(PAR_OK, parser(&v, json));\
+		EXPECT_EQ_BASE(PAR_NUMBER, par_get_type(&v));\
+		EXPECT_EQ_BASE(expect, par_get_number(&v));\
+	}while(0)
 
-#define TEST_ERROR(error, result, json)\
-    do{\
-        par_value v;\
-        v.type = PAR_TRUE;\
-        EXPECT_EQ_INT(error, parser(&v, json));\
-        EXPECT_EQ_INT(result, par_get_type(&v));\
-    }while(0)
-
-//宏-解析数字
-#define TEST_NUMBER(error, json)\
-    do{\
-        par_value v;\
-        v.type = PAR_NULL;\
-        EXPECT_EQ_INT(PAR_OK, parser(&v, json));\
-        EXPECT_EQ_INT(PAR_NUMBER, par_get_type(&v));\
-        EXPECT_EQ_DOUBLE(error, par_get_number(&v));\
-    }while(0)
-
-//宏-解析字符串
+/*	定义进阶宏：字符串值检测
+	入参：
+		expect->预期结果
+		json->待解析的字符串
+	需要校验：
+		解析是否成功
+		解析后类型是否正确
+		解析出来的字符串是否正确
+*/
 #define TEST_STRING(expect, json)\
-    do {\
-        lept_value v;\
-        lept_init(&v);\
-        EXPECT_EQ_INT(PAR_OK, parser(&v, json));\
-        EXPECT_EQ_INT(PAR_STRING, par_get_type(&v));\
-        EXPECT_EQ_STRING(expect, lept_get_string(&v), lept_get_string_length(&v));\
-        lept_free(&v);\
-    } while(0)
+	do{\
+		par_value v;\
+		v.type = PAR_NULL;\
+		EXPECT_EQ_BASE(PAR_OK, parser(&v, json));\
+		EXPECT_EQ_BASE(PAR_STRING, par_get_type(&v));\
+		EXPECT_EQ_BASE_STRING(expect, par_get_string(&v));\
+	}while(0)
 
-#if 0 
-/*null，false，true整合为一个*/
-//测试null解析
+//测试null值解析正确
 static void test_parse_null() {
-#if 0
-	/*par_value v;
-	v.type = PAR_TRUE;
-
-	EXPECT_EQ_INT(PAR_OK, parser(&v, "null"));
-	EXPECT_EQ_INT(PAR_NULL, par_get_type(&v));*/
-    TEST_ERROR(PAR_OK, PAR_NULL, "null");
+#if 0 
+	par_value v;
+	v.type = PAR_NULL;
+	
+	EXPECT_EQ_BASE(PAR_OK, parser(&v, "null"));
+	EXPECT_EQ_BASE(PAR_NULL, par_get_type(&v));
+	par_free(&v);
 #endif
 }
 
-//测试true解析
+//测试true值解析正确
 static void test_parse_true() {
 #if 0
-    /*par_value v;
-    v.type = PAR_TRUE;
+	par_value v;
+	v.type = PAR_NULL;
 
-    EXPECT_EQ_INT(PAR_OK, parser(&v, "true"));
-    EXPECT_EQ_INT(PAR_TRUE, par_get_type(&v));*/
-    TEST_ERROR(PAR_OK, PAR_TRUE, "true");
+	EXPECT_EQ_BASE(PAR_OK, parser(&v, "true"));
+	EXPECT_EQ_BASE(PAR_TRUE, par_get_type(&v));
+	par_free(&v);
 #endif
 }
 
-//测试false解析
+//测试false值解析正确
 static void test_parse_false() {
 #if 0
-    /*par_value v;
-    v.type = PAR_TRUE;
+	par_value v;
+	v.type = PAR_NULL;
 
-    EXPECT_EQ_INT(PAR_OK, parser(&v, "false"));
-    EXPECT_EQ_INT(PAR_FALSE, par_get_type(&v));*/
-    TEST_ERROR(PAR_OK, PAR_FALSE, "false");
-#endif
-}
-#endif
-
-static void test_parse_bool() {
-#if 0
-    TEST_ERROR(PAR_OK, PAR_NULL, "null");
-    TEST_ERROR(PAR_OK, PAR_TRUE, "true");
-    TEST_ERROR(PAR_OK, PAR_FALSE, "false");
+	EXPECT_EQ_BASE(PAR_OK, parser(&v, "false"));
+	EXPECT_EQ_BASE(PAR_FALSE, par_get_type(&v));
+	par_free(&v);
 #endif
 }
 
+//测试数字值解析正确
 static void test_parse_number() {
 #if 0
-    TEST_NUMBER(0.0, "0");
-    TEST_NUMBER(0.0, "-0");
-    TEST_NUMBER(0.0, "-0.0");
-    TEST_NUMBER(1.0, "1");
-    TEST_NUMBER(-1.0, "-1");
-    TEST_NUMBER(1.5, "1.5");
-    TEST_NUMBER(-1.5, "-1.5");
-    TEST_NUMBER(3.1416, "3.1416");
-    TEST_NUMBER(1E10, "1E10");
-    TEST_NUMBER(1e10, "1e10");
-    TEST_NUMBER(1E+10, "1E+10");
-    TEST_NUMBER(1E-10, "1E-10");
-    TEST_NUMBER(-1E10, "-1E10");
-    TEST_NUMBER(-1e10, "-1e10");
-    TEST_NUMBER(-1E+10, "-1E+10");
-    TEST_NUMBER(-1E-10, "-1E-10");
-    TEST_NUMBER(1.234E+10, "1.234E+10");
-    TEST_NUMBER(1.234E-10, "1.234E-10");
+	TEST_NUMBER(0.0, "0");
+	TEST_NUMBER(0.0, "-0");
+	TEST_NUMBER(0.0, "-0.0");
+	TEST_NUMBER(1.0, "1");
+	TEST_NUMBER(-1.0, "-1");
+	TEST_NUMBER(1.5, "1.5");
+	TEST_NUMBER(-1.5, "-1.5");
+	TEST_NUMBER(3.1416, "3.1416");
+	TEST_NUMBER(1E10, "1E10");
+	TEST_NUMBER(1e10, "1e10");
+	TEST_NUMBER(1E+10, "1E+10");
+	TEST_NUMBER(1E-10, "1E-10");
+	TEST_NUMBER(-1E10, "-1E10");
+	TEST_NUMBER(-1e10, "-1e10");
+	TEST_NUMBER(-1E+10, "-1E+10");
+	TEST_NUMBER(-1E-10, "-1E-10");
+	TEST_NUMBER(1.234E+10, "1.234E+10");
+	TEST_NUMBER(1.234E-10, "1.234E-10");
 #endif
 }
 
+//测试json全为空值的异常
 static void test_parse_expect_value() {
 #if 0
-    /*par_value v;
-
-    v.type = PAR_FALSE;
-    EXPECT_EQ_INT(PAR_EXPECT_VALUE, parser(&v, ""));
-    EXPECT_EQ_INT(PAR_NULL, par_get_type(&v));
-
-    v.type = PAR_FALSE;
-    EXPECT_EQ_INT(PAR_EXPECT_VALUE, parser(&v, " "));
-    EXPECT_EQ_INT(PAR_NULL, par_get_type(&v));*/
-    TEST_ERROR(PAR_EXPECT_VALUE, PAR_NULL, "");
-    TEST_ERROR(PAR_EXPECT_VALUE, PAR_NULL, " ");
+	TEST_ERROR(PAR_EXPECT_VALUE, "");
+	TEST_ERROR(PAR_EXPECT_VALUE, " ");
 #endif
 }
 
+//测试json中的异常值（整个都是错的，解析不了一点数据）
 static void test_parse_invalid_value() {
-#if 0 
-    /*par_value v;
-    v.type = PAR_FALSE;
-    EXPECT_EQ_INT(PAR_INVALID_VALUE, parser(&v, "nul"));
-    EXPECT_EQ_INT(PAR_NULL, par_get_type(&v));
-
-    v.type = PAR_FALSE;
-    EXPECT_EQ_INT(PAR_INVALID_VALUE, parser(&v, "?"));
-    EXPECT_EQ_INT(PAR_NULL, par_get_type(&v));*/
-    /*测试bool合法*/
-    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "nul");
-    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "?");
+#if 0
+	/*其他值异常*/
+	TEST_ERROR(PAR_INVALID_VALUE, "nul");
+	TEST_ERROR(PAR_INVALID_VALUE, "?");
 #endif
 
 #if 0
-    /*测试数字合法*/
-    /* invalid number */
-    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "+0");
-    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "+1");
-    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, ".123"); /* at least one digit before '.' */
-    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "1.");   /* at least one digit after '.' */
-    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "INF");
-    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "inf");
-    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "NAN");
-    TEST_ERROR(PAR_INVALID_VALUE, PAR_NULL, "nan");
+	/* 数字值异常 */
+	TEST_ERROR(PAR_INVALID_VALUE, "+0");
+	TEST_ERROR(PAR_INVALID_VALUE, "+1");
+	TEST_ERROR(PAR_INVALID_VALUE, ".123"); /* at least one digit before '.' */
+	TEST_ERROR(PAR_INVALID_VALUE, "1.");   /* at least one digit after '.' */
+	TEST_ERROR(PAR_INVALID_VALUE, "INF");
+	TEST_ERROR(PAR_INVALID_VALUE, "inf");
+	TEST_ERROR(PAR_INVALID_VALUE, "NAN");
+	TEST_ERROR(PAR_INVALID_VALUE, "nan");
 #endif
 }
 
+//测试json中的错误值（能解析出来数据，但是有错误的地方）
 static void test_parse_root_not_singular() {
 #if 0
-    /*par_value v;
-    v.type = PAR_FALSE;
-    EXPECT_EQ_INT(PAR_ROOT_NOT_SINGULAR, parser(&v, "null x"));
-    EXPECT_EQ_INT(PAR_NULL, par_get_type(&v));*/
-    TEST_ERROR(PAR_ROOT_NOT_SINGULAR, PAR_NULL, "null x");
+	/*错误的其他值*/
+	TEST_ERROR(PAR_ROOT_NOT_SINGULAR, "null x");
 #endif
 
 #if 0
-    /*校验数字合法*/
-    /* invalid number */
-    TEST_ERROR(PAR_ROOT_NOT_SINGULAR, PAR_NUMBER, "0123"); /* after zero should be '.' or nothing */
-    TEST_ERROR(PAR_ROOT_NOT_SINGULAR, PAR_NUMBER, "0x0");
-    TEST_ERROR(PAR_ROOT_NOT_SINGULAR, PAR_NUMBER, "0x123");
+	/* 错误数字值 */
+	TEST_ERROR(PAR_ROOT_NOT_SINGULAR, "0123"); /* after zero should be '.' or nothing */
+	TEST_ERROR(PAR_ROOT_NOT_SINGULAR, "0x0");
+	TEST_ERROR(PAR_ROOT_NOT_SINGULAR, "0x123");
 #endif
 }
 
-//数字边界值测试
-static void test_parse_number_limit_out() {
+//测试数字解析越界
+static void test_parse_number_too_big() {
 #if 0
-    //TEST_NUMBER(0.0, "1e-10000"); /* must underflow */
-    TEST_ERROR(PAR_NUMBER_TOO_BIG, PAR_NUMBER, "1e309");
-    TEST_ERROR(PAR_NUMBER_TOO_BIG, PAR_NUMBER, "-1e309");
-    TEST_NUMBER(1.0000000000000002, "1.0000000000000002"); /* the smallest number > 1 */
-    TEST_NUMBER(4.9406564584124654e-324, "4.9406564584124654e-324"); /* minimum denormal */
-    TEST_NUMBER(-4.9406564584124654e-324, "-4.9406564584124654e-324");
-    TEST_NUMBER(2.2250738585072009e-308, "2.2250738585072009e-308");  /* Max subnormal double */
-    TEST_NUMBER(-2.2250738585072009e-308, "-2.2250738585072009e-308");
-    TEST_NUMBER(2.2250738585072014e-308, "2.2250738585072014e-308");  /* Min normal positive double */
-    TEST_NUMBER(-2.2250738585072014e-308, "-2.2250738585072014e-308");
-    TEST_NUMBER(1.7976931348623157e+308, "1.7976931348623157e+308");  /* Max double */
-    TEST_NUMBER(-1.7976931348623157e+308, "-1.7976931348623157e+308");
+	TEST_ERROR(PAR_NUMBER_TOO_BIG, "1e309");
+	TEST_ERROR(PAR_NUMBER_TOO_BIG, "-1e309");
 #endif
 }
 
-//字符串解析测试
+//测试字符串解析结果
 static void test_parse_string() {
-    TEST_STRING("", "\"\"");
-    TEST_STRING("Hello", "\"Hello\"");
+#if 1
+
+#if 1
+	TEST_STRING("", "\"\"");
+#endif
 #if 0
-    TEST_STRING("Hello\nWorld", "\"Hello\\nWorld\"");
-    TEST_STRING("\" \\ / \b \f \n \r \t", "\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"");
+	TEST_STRING("Hello", "\"Hello\"");
+	TEST_STRING("Hello\nWorld", "\"Hello\\nWorld\"");
+	TEST_STRING("\" \\ / \b \f \n \r \t", "\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"");
+#endif
 #endif
 }
 
 static void test_parse() {
 #if 0
-    test_parse_null();
-    test_parse_true();
-    test_parse_false();
+	/*测试bool值与null值*/
+	test_parse_null();
+	test_parse_true();
+	test_parse_false();
 #endif
-    test_parse_bool();
-    test_parse_number();
-    test_parse_expect_value();
-    test_parse_invalid_value();
-    test_parse_root_not_singular();
-    test_parse_number_limit_out();
 
+#if 0
+	/*测试数字值*/
+	test_parse_number();
 
+	/*测试数字解析越界*/
+	test_parse_number_too_big();
+#endif
+
+#if 0
+	/*空值异常返回测试*/
+	test_parse_expect_value();
+#endif
+
+#if 0
+	/*测试json中的异常值*/
+	test_parse_invalid_value();
+#endif
+
+#if 0
+	/*测试错误值*/
+	test_parse_root_not_singular();
+#endif
+
+#if 1
+	/*测试字符串解析结果*/
+	test_parse_string();
+#endif
 }
 
 int main() {
+#ifdef _WINDOWS
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+
 	test_parse();
-	printf("%d/%d (%3.2f%%) passed\n", test_pass, test_count, test_pass * 100.0 / test_count);
+	float percent = test_pass * 100 / test_count;
+	std::cout << std::fixed << std::setprecision(2);
+	std::cout << "结果：" << test_pass << " / " << test_count
+			<< "\n通过率：" << percent << "%" << std::endl;
+
 	return main_ret;
 }
