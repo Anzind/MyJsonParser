@@ -162,8 +162,27 @@ static char* par_string_pop(par_context* c) {
 	return c_str;
 }
 
+//读4位16进制数字
+static const char* par_hex4(const char* p, unsigned* u) {
+	int i = 0;
+	*u = 0;
+	for (; i < 4; i++) {
+		char ch = *p++;
+		*u <<= 4;
+		if (ch >= '0' && ch <= '9')
+			*u |= ch - '0';
+		else if (ch >= 'A' && ch <= 'F')
+			*u |= ch - ('A' - 10);
+		else if (ch >= 'a' && ch <= 'f')
+			*u |= ch - ('a' - 10);
+		else return NULL;
+	}
+	return p;
+}
+
 //解析字符串
 static int par_string(par_context* c, par_value* v) {
+	unsigned u;
 	const char* p = nullptr;
 	EXPECT(c, '\"');
 
@@ -189,6 +208,12 @@ static int par_string(par_context* c, par_value* v) {
 			case 'n': c->s.push_back('\n'); break;
 			case 'r': c->s.push_back('\r'); break;
 			case 't': c->s.push_back('\t'); break;
+			case 'u': {
+				p = par_hex4(p, &u);
+				if (!p) return PAR_INVALID_UNICODE_HEX;
+				par_encode_utf8(c, u);
+				break;
+			}
 			default: return PAR_INVALID_STRING_ESCAPE;
 			}
 			break;

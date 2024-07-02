@@ -1,5 +1,6 @@
 ﻿//单元测试
 #include <iostream>
+#include <Windows.h>
 #include <iomanip>
 #include <string>
 #include "parjson.h"
@@ -263,7 +264,7 @@ static void test_parse_string() {
 	}
 #endif
 
-#if 0
+#if 1
 	TEST_STRING("", "\"\"");
 	TEST_STRING("Hello", "\"Hello\"");
 	TEST_STRING("Hello\nWorld", "\"Hello\\nWorld\"");
@@ -352,12 +353,16 @@ int main() {
 #ifdef _WINDOWS
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
+#if 0
+	SetConsoleOutputCP(CP_UTF8);
+	SetConsoleCP(CP_UTF8);
+#endif
 
 	test_parse();
 	float percent = test_pass * 100 / (float)test_count;
 	std::cout << std::fixed << std::setprecision(2);
-	std::cout << "结果：" << test_pass << " / " << test_count
-		<< "\n通过率：" << percent << "%" << std::endl;
+	std::cout << "Result:" << test_pass << " / " << test_count
+		<< "\nPassing Rate:" << percent << "%" << std::endl;
 
 	return main_ret;
 }
