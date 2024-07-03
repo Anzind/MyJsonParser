@@ -164,6 +164,8 @@ static char* par_string_pop(par_context* c) {
 
 //读4位16进制数字
 static const char* par_hex4(const char* p, unsigned* u) {
+#if 1
+	/*所谓老办法就是没办法的办法，最基础的办法*/
 	int i = 0;
 	*u = 0;
 	for (; i < 4; i++) {
@@ -178,11 +180,47 @@ static const char* par_hex4(const char* p, unsigned* u) {
 		else return NULL;
 	}
 	return p;
+#endif
+
+#if 0
+	/*还有问题还需要修改*/
+	/*C++11新方案，但是在用函数之前得手动检测数字格式是否正确*/
+	std::string num_str = std::string(p).substr(0, 4);
+	for (int i = 0; i < 4; i++) {
+		if ((num_str[i] >= 'a' && num_str[i] <= 'z') || (num_str[i] >= 'A' && num_str[i] <= 'Z') || (num_str[i] >= '0' && num_str[i] <= '9')) p++;
+		else return NULL;
+	}
+
+	*u = (unsigned)std::stoi(num_str.c_str(), 0, 16);
+	return p;
+#endif
+
+}
+
+static void par_encode_utf8(par_context* c, unsigned u) {
+	if (u <= 0x7f)
+		c->s.push_back(u);
+	else if (u <= 0x7ff) {
+		c->s.push_back(0xc0 | ((u >> 6) & 0xff));
+		c->s.push_back(0x80 | (u & 0x3f));
+	}
+	else if (u <= 0xffff) {
+		c->s.push_back(0xe0 | ((u >> 12) & 0xff));
+		c->s.push_back(0x80 | ((u >> 6) & 0x3f));
+		c->s.push_back(0x80 | (u & 0x3f));
+	}
+	else {
+		assert(u <= 0x10ffff);
+		c->s.push_back(0xf0 | ((u >> 18) & 0xff));
+		c->s.push_back(0x80 | ((u >> 12) & 0x3f));
+		c->s.push_back(0x80 | ((u >> 6) & 0x3f));
+		c->s.push_back(0x80 | (u & 0x3f));
+	}
 }
 
 //解析字符串
 static int par_string(par_context* c, par_value* v) {
-	unsigned u;
+	unsigned u,u2;
 	const char* p = nullptr;
 	EXPECT(c, '\"');
 
@@ -211,6 +249,17 @@ static int par_string(par_context* c, par_value* v) {
 			case 'u': {
 				p = par_hex4(p, &u);
 				if (!p) return PAR_INVALID_UNICODE_HEX;
+				if (u >= 0xd800 && u <= 0xdbff) {
+					if (*p++ != '\\')
+						return PAR_INVALID_UNICODE_SURROGATE;
+					if (*p++ != 'u')
+						return PAR_INVALID_UNICODE_SURROGATE;
+					p = par_hex4(p, &u2);
+					if (!p) return PAR_INVALID_UNICODE_HEX;
+					if (u2 < 0xdc00 || u2 > 0xdfff)
+						return PAR_INVALID_UNICODE_SURROGATE;
+					u = (((u - 0xd800) << 10) | (u2 - 0xdc00)) + 0x10000;
+				}
 				par_encode_utf8(c, u);
 				break;
 			}

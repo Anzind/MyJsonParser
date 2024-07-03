@@ -231,7 +231,7 @@ static void test_parse_number_too_big() {
 
 //测试字符串解析结果
 static void test_parse_string() {
-#if 0
+#if 1
 
 #if 0
 	/*宏展开*/
@@ -264,12 +264,24 @@ static void test_parse_string() {
 	}
 #endif
 
-#if 1
+#if 0
+	/*普通字符和普通转义字符*/
 	TEST_STRING("", "\"\"");
 	TEST_STRING("Hello", "\"Hello\"");
 	TEST_STRING("Hello\nWorld", "\"Hello\\nWorld\"");
 	TEST_STRING("\" \\ / \b \f \n \r \t", "\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"");
 #endif
+
+#if 0
+	/*Unicode转义字符*/
+	TEST_STRING("Hello\0World", "\"Hello\\u0000World\"");
+	TEST_STRING("\xC2\xA2", "\"\\u00A2\"");     /* Cents sign U+00A2 */
+	TEST_STRING("\xE2\x82\xAC", "\"\\u20AC\""); /* Euro sign U+20AC */
+	TEST_STRING("\xF0\x9D\x84\x9E", "\"\\uD834\\uDD1E\"");  /* G clef sign U+1D11E */
+	TEST_STRING("\xF0\x9D\x84\x9E", "\"\\ud834\\udd1e\"");  /* G clef sign U+1D11E */
+	TEST_STRING("\x24", "\"\\u0024\"");         /* Dollar sign U+0024 */
+#endif
+
 #endif
 }
 
@@ -299,54 +311,72 @@ static void test_parse_invalid_string_char() {
 #endif
 }
 
-static void test_parse() {
+//测试字符串\u转义字符解析码点错误
+static void test_parse_invalid_unicode_hex() {
 #if 0
+	TEST_ERROR(PAR_INVALID_UNICODE_HEX, "\"\\u\"");
+	TEST_ERROR(PAR_INVALID_UNICODE_HEX, "\"\\u0\"");
+	TEST_ERROR(PAR_INVALID_UNICODE_HEX, "\"\\u01\"");
+	TEST_ERROR(PAR_INVALID_UNICODE_HEX, "\"\\u012\"");
+	TEST_ERROR(PAR_INVALID_UNICODE_HEX, "\"\\u/000\"");
+	TEST_ERROR(PAR_INVALID_UNICODE_HEX, "\"\\uG000\"");
+	TEST_ERROR(PAR_INVALID_UNICODE_HEX, "\"\\u0/00\"");
+	TEST_ERROR(PAR_INVALID_UNICODE_HEX, "\"\\u0G00\"");
+	TEST_ERROR(PAR_INVALID_UNICODE_HEX, "\"\\u00/0\"");
+	TEST_ERROR(PAR_INVALID_UNICODE_HEX, "\"\\u00G0\"");
+	TEST_ERROR(PAR_INVALID_UNICODE_HEX, "\"\\u000/\"");
+	TEST_ERROR(PAR_INVALID_UNICODE_HEX, "\"\\u000G\"");
+	TEST_ERROR(PAR_INVALID_UNICODE_HEX, "\"\\u 123\"");
+#endif
+}
+
+//测试字符串\u转义字符码点代理错误
+static void test_parse_invalid_unicode_surrogate() {
+#if 0
+	TEST_ERROR(PAR_INVALID_UNICODE_SURROGATE, "\"\\uD800\"");
+	TEST_ERROR(PAR_INVALID_UNICODE_SURROGATE, "\"\\uDBFF\"");
+	TEST_ERROR(PAR_INVALID_UNICODE_SURROGATE, "\"\\uD800\\\\\"");
+	TEST_ERROR(PAR_INVALID_UNICODE_SURROGATE, "\"\\uD800\\uDBFF\"");
+	TEST_ERROR(PAR_INVALID_UNICODE_SURROGATE, "\"\\uD800\\uE000\"");
+#endif
+}
+
+static void test_parse() {
 	/*测试bool值与null值*/
 	test_parse_null();
 	test_parse_true();
 	test_parse_false();
-#endif
 
-#if 0
 	/*测试数字值*/
 	test_parse_number();
 
 	/*测试数字解析越界*/
 	test_parse_number_too_big();
-#endif
 
-#if 0
-#if 1
 	/*空值异常返回测试*/
 	test_parse_expect_value();
-#endif
-#if 1
+
 	/*测试json中的异常值*/
 	test_parse_invalid_value();
-#endif
-#if 1
+
 	/*测试错误值*/
 	test_parse_root_not_singular();
-#endif
-#endif
 
-#if 0
-#if 1
 	/*测试字符串解析结果*/
 	test_parse_string();
-#endif
-#if 1
+
 	/*测试字符串丢失双引号异常*/
 	test_parse_missing_quotation_mark();
-#endif
-#if 1
+
 	/*测试字符串非法转义字符异常*/
 	test_parse_invalid_string_escape();
-#endif
-#if 1
 	test_parse_invalid_string_char();
-#endif
-#endif
+
+	/*测试字符串\u转义字符解析码点错误*/
+	test_parse_invalid_unicode_hex();
+
+	/*测试字符串\u转义字符码点代理错误*/
+	test_parse_invalid_unicode_surrogate();
 }
 
 int main() {
