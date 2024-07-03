@@ -12,27 +12,28 @@
 #endif
 
 #if 1
-	/*统一声明*/
-	static void par_whitespace(par_context* c);
-	static int par_literal(par_context* c, par_value* v, const char* cstr, par_type type);
-	int par_get_boolean(const par_value* v);
-	static int par_number(par_context* c, par_value* v);
-	void par_set_number(par_value* v, double n);
-	double par_get_number(const par_value* v);
-	static char* par_string_pop(par_context* c);
-	static const char* par_hex4(const char* p, unsigned* u);
-	static void par_encode_utf8(par_context* c, unsigned u);
-	static int par_string(par_context* c, par_value* v);
-	void par_set_string(par_value* v, char* s);
-	const char* par_get_string(const par_value* v);
-	static par_value* par_array_pop(par_context* c);
-	size_t par_get_array_size(const par_value* v);
-	par_value* par_get_array_element(const par_value* v, size_t index);
-	static int par_array(par_context* c, par_value* v);
-	static int par_fun_value(par_context* c, par_value* v);
-	int parser(par_value* v, const char* json);
-	par_type par_get_type(const par_value* v);
-	void par_free(par_value* v);
+/*统一声明*/
+typedef struct par_context par_context;
+static void par_whitespace(par_context* c);
+static int par_literal(par_context* c, par_value* v, const char* cstr, par_type type);
+int par_get_boolean(const par_value* v);
+static int par_number(par_context* c, par_value* v);
+void par_set_number(par_value* v, double n);
+double par_get_number(const par_value* v);
+static char* par_string_pop(par_context* c);
+static const char* par_hex4(const char* p, unsigned* u);
+static void par_encode_utf8(par_context* c, unsigned u);
+static int par_string(par_context* c, par_value* v);
+void par_set_string(par_value* v, char* s);
+const char* par_get_string(const par_value* v);
+static par_value* par_array_pop(par_context* c);
+size_t par_get_array_size(const par_value* v);
+par_value* par_get_array_element(const par_value* v, size_t index);
+static int par_array(par_context* c, par_value* v);
+static int par_fun_value(par_context* c, par_value* v);
+int parser(par_value* v, const char* json);
+par_type par_get_type(const par_value* v);
+void par_free(par_value* v);
 #endif
 
 #define EXPECT(c,ch) \
@@ -46,13 +47,13 @@ do{\
 #define ISDIGIT1TO9(ch)     ((ch) >= '1' && (ch) <= '9')
 
 //需要解析的json
-typedef struct {
+struct par_context {
 	const char* json;
 	/*辅助字符串解析的列表*/
 	std::vector<char> s;
 	/*辅助数组解析的列表*/
 	std::vector<par_value> sv;
-} par_context;
+};
 
 static void par_whitespace(par_context* c) {
 	const char* p = c->json;
@@ -169,7 +170,7 @@ void par_set_number(par_value* v, double n) {
 	v->type = PAR_NUMBER;
 }
 
-double par_get_number(const par_value* v){
+double par_get_number(const par_value* v) {
 	assert(v != NULL && v->type == PAR_NUMBER);
 	return v->num;
 }
@@ -246,7 +247,7 @@ static void par_encode_utf8(par_context* c, unsigned u) {
 
 //解析字符串
 static int par_string(par_context* c, par_value* v) {
-	unsigned u,u2;
+	unsigned u, u2;
 	const char* p = nullptr;
 	EXPECT(c, '\"');
 
@@ -370,7 +371,7 @@ static int par_array(par_context* c, par_value* v) {
 			v->arr.elem = par_array_pop(c);
 			return PAR_OK;
 		}
-		else 
+		else
 			return PAR_MISS_COMMA_OR_SQUARE_BRACKET;
 
 		par_whitespace(c);

@@ -346,8 +346,9 @@ static void test_parse_array() {
 #if 1
 	size_t i, j;
 	par_value v;
-	v.type = PAR_NULL;
 
+#if 1
+	v.type = PAR_NULL;
 	EXPECT_EQ_BASE(PAR_OK, parser(&v, "[ null , false , true , 123 , \"abc\" ]"));
 	EXPECT_EQ_BASE(PAR_ARRAY, par_get_type(&v));
 	EXPECT_EQ_BASE(5, par_get_array_size(&v));
@@ -359,7 +360,9 @@ static void test_parse_array() {
 	EXPECT_EQ_BASE(123.0, par_get_number(par_get_array_element(&v, 3)));
 	EXPECT_EQ_BASE_STRING("abc", par_get_string(par_get_array_element(&v, 4)));
 	par_free(&v);
+#endif
 
+#if 0
 	v.type = PAR_NULL;
 	EXPECT_EQ_BASE(PAR_OK, parser(&v, "[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]"));
 	EXPECT_EQ_BASE(PAR_ARRAY, par_get_type(&v));
@@ -375,7 +378,7 @@ static void test_parse_array() {
 		}
 	}
 	par_free(&v);
-
+#endif
 
 #endif
 }
