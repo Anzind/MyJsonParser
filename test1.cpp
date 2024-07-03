@@ -341,6 +341,45 @@ static void test_parse_invalid_unicode_surrogate() {
 #endif
 }
 
+//测试数组解析
+static void test_parse_array() {
+#if 1
+	size_t i, j;
+	par_value v;
+	v.type = PAR_NULL;
+
+	EXPECT_EQ_BASE(PAR_OK, parser(&v, "[ null , false , true , 123 , \"abc\" ]"));
+	EXPECT_EQ_BASE(PAR_ARRAY, par_get_type(&v));
+	EXPECT_EQ_BASE(5, par_get_array_size(&v));
+	EXPECT_EQ_BASE(PAR_NULL, par_get_type(par_get_array_element(&v, 0)));
+	EXPECT_EQ_BASE(PAR_FALSE, par_get_type(par_get_array_element(&v, 1)));
+	EXPECT_EQ_BASE(PAR_TRUE, par_get_type(par_get_array_element(&v, 2)));
+	EXPECT_EQ_BASE(PAR_NUMBER, par_get_type(par_get_array_element(&v, 3)));
+	EXPECT_EQ_BASE(PAR_STRING, par_get_type(par_get_array_element(&v, 4)));
+	EXPECT_EQ_BASE(123.0, par_get_number(par_get_array_element(&v, 3)));
+	EXPECT_EQ_BASE_STRING("abc", par_get_string(par_get_array_element(&v, 4)));
+	par_free(&v);
+
+	v.type = PAR_NULL;
+	EXPECT_EQ_BASE(PAR_OK, parser(&v, "[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]"));
+	EXPECT_EQ_BASE(PAR_ARRAY, par_get_type(&v));
+	EXPECT_EQ_BASE(4, par_get_array_size(&v));
+	for (i = 0; i < 4; i++) {
+		par_value* a = par_get_array_element(&v, i);
+		EXPECT_EQ_BASE(PAR_ARRAY, par_get_type(a));
+		EXPECT_EQ_BASE(i, par_get_array_size(a));
+		for (j = 0; j < i; j++) {
+			par_value* e = par_get_array_element(a, j);
+			EXPECT_EQ_BASE(PAR_NUMBER, par_get_type(e));
+			EXPECT_EQ_BASE((double)j, par_get_number(e));
+		}
+	}
+	par_free(&v);
+
+
+#endif
+}
+
 static void test_parse() {
 	/*测试bool值与null值*/
 	test_parse_null();
@@ -377,6 +416,9 @@ static void test_parse() {
 
 	/*测试字符串\u转义字符码点代理错误*/
 	test_parse_invalid_unicode_surrogate();
+
+	/*测试数组解析*/
+	test_parse_array();
 }
 
 int main() {

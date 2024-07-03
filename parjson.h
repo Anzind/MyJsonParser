@@ -16,17 +16,24 @@ typedef enum {
 } par_type;
 
 //json树节点
-typedef struct {
+typedef struct par_value par_value;
+struct par_value{
 	union {
+		/*当该项为数组是用这个*/
+		struct {
+			par_value* elem;
+			size_t size;
+		}arr;
+		/*当该项为字符串时用这个*/
 		struct {
 			char* c_str;
 			size_t len;
 		}str;
-		//当该项为数字时用这个
+		/*当该项为数字时用这个*/
 		double num;
 	};
 	par_type type;
-} par_value;
+};
 
 //解析返回枚举
 enum {
@@ -58,7 +65,10 @@ enum {
 	PAR_INVALID_UNICODE_SURROGATE = 8,
 
 	//解析码点错误
-	PAR_INVALID_UNICODE_HEX = 9
+	PAR_INVALID_UNICODE_HEX = 9,
+
+	//列表格式错误
+	PAR_MISS_COMMA_OR_SQUARE_BRACKET = 10
 };
 
 //解析jsonAPI
@@ -77,5 +87,8 @@ double par_get_number(const par_value* v);
 
 const char* par_get_string(const par_value* v);
 void par_set_string(par_value* v, char* s);
+
+size_t par_get_array_size(const par_value* v);
+par_value* par_get_array_element(const par_value* v, size_t index);
 
 #endif

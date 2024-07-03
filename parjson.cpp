@@ -11,6 +11,30 @@
 #include<crtdbg.h>
 #endif
 
+#if 1
+	/*统一声明*/
+	static void par_whitespace(par_context* c);
+	static int par_literal(par_context* c, par_value* v, const char* cstr, par_type type);
+	int par_get_boolean(const par_value* v);
+	static int par_number(par_context* c, par_value* v);
+	void par_set_number(par_value* v, double n);
+	double par_get_number(const par_value* v);
+	static char* par_string_pop(par_context* c);
+	static const char* par_hex4(const char* p, unsigned* u);
+	static void par_encode_utf8(par_context* c, unsigned u);
+	static int par_string(par_context* c, par_value* v);
+	void par_set_string(par_value* v, char* s);
+	const char* par_get_string(const par_value* v);
+	static par_value* par_array_pop(par_context* c);
+	size_t par_get_array_size(const par_value* v);
+	par_value* par_get_array_element(const par_value* v, size_t index);
+	static int par_array(par_context* c, par_value* v);
+	static int par_fun_value(par_context* c, par_value* v);
+	int parser(par_value* v, const char* json);
+	par_type par_get_type(const par_value* v);
+	void par_free(par_value* v);
+#endif
+
 #define EXPECT(c,ch) \
 do{\
     assert(*c->json == (ch));\
@@ -24,7 +48,10 @@ do{\
 //需要解析的json
 typedef struct {
 	const char* json;
+	/*辅助字符串解析的列表*/
 	std::vector<char> s;
+	/*辅助数组解析的列表*/
+	std::vector<par_value> sv;
 } par_context;
 
 static void par_whitespace(par_context* c) {
@@ -142,8 +169,7 @@ void par_set_number(par_value* v, double n) {
 	v->type = PAR_NUMBER;
 }
 
-double par_get_number(const par_value* v)
-{
+double par_get_number(const par_value* v){
 	assert(v != NULL && v->type == PAR_NUMBER);
 	return v->num;
 }
@@ -289,12 +315,76 @@ const char* par_get_string(const par_value* v) {
 	return v->str.c_str;
 }
 
+static par_value* par_array_pop(par_context* c) {
+	size_t size = c->sv.size();
+	par_value* temp = new par_value[size];
+	par_value* p = temp;
+
+	for (int i = 0; i < size; i++) {
+		*p++ = c->sv[i];
+	}
+
+	return temp;
+}
+
+size_t par_get_array_size(const par_value* v) {
+	assert(v != NULL && v->type == PAR_ARRAY);
+	return v->arr.size;
+}
+
+par_value* par_get_array_element(const par_value* v, size_t index) {
+	assert(v != NULL && v->type == PAR_ARRAY);
+	assert(index < v->arr.size);
+	return &v->arr.elem[index];
+}
+
+//解析数组
+static int par_array(par_context* c, par_value* v) {
+	size_t size = 0;
+	int ret;
+	EXPECT(c, '[');
+
+	par_whitespace(c);
+	if (*c->json == ']') {
+		c->json++;
+		v->type = PAR_ARRAY;
+		v->arr.size = 0;
+		v->arr.elem = nullptr;
+		return PAR_OK;
+	}
+	for (;;) {
+		par_value e;
+		e.type = PAR_NULL;
+
+		ret = par_fun_value(c, &e);
+		if (ret != PAR_OK) return ret;
+		c->sv.push_back(e);
+		size++;
+
+		par_whitespace(c);
+		if (*c->json == ',') c->json++;
+		else if (*c->json == ']') {
+			c->json++;
+			v->type = PAR_ARRAY;
+			v->arr.size = c->sv.size();
+			v->arr.elem = par_array_pop(c);
+			return PAR_OK;
+		}
+		else 
+			return PAR_MISS_COMMA_OR_SQUARE_BRACKET;
+
+		par_whitespace(c);
+	}
+
+}
+
 static int par_fun_value(par_context* c, par_value* v) {
 	switch (*c->json) {
 	case 'n': return par_literal(c, v, "null", PAR_NULL);
 	case 't': return par_literal(c, v, "true", PAR_TRUE);
 	case 'f': return par_literal(c, v, "false", PAR_FALSE);
 	case '"': return par_string(c, v);
+	case '[': return par_array(c, v);
 	case '\0': return PAR_EXPECT_VALUE;
 	default: return par_number(c, v);
 	}
@@ -333,6 +423,13 @@ void par_free(par_value* v) {
 		else {
 			delete[] v->str.c_str;
 			v->str.len = 0;
+		}
+	}
+	else if (v->type == PAR_ARRAY) {
+		if (v->arr.size == 0) v->arr.elem = nullptr;
+		else {
+			delete[] v->arr.elem;
+			v->arr.size = 0;
 		}
 	}
 	v->type = PAR_NULL;
