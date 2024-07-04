@@ -17,9 +17,15 @@ typedef enum {
 
 //json树节点
 typedef struct par_value par_value;
+typedef struct par_member par_member;
 struct par_value{
 	union {
-		/*当该项为数组是用这个*/
+		/*当该项为对象时用这个*/
+		struct {
+			par_member* mem;
+			size_t size;
+		}obj;
+		/*当该项为数组时用这个*/
 		struct {
 			par_value* elem;
 			size_t size;
@@ -33,6 +39,12 @@ struct par_value{
 		double num;
 	};
 	par_type type;
+};
+
+struct par_member {
+	char* key;
+	size_t key_len;
+	par_value value;
 };
 
 //解析返回枚举
@@ -68,7 +80,16 @@ enum {
 	PAR_INVALID_UNICODE_HEX = 9,
 
 	//列表格式错误
-	PAR_MISS_COMMA_OR_SQUARE_BRACKET = 10
+	PAR_MISS_COMMA_OR_SQUARE_BRACKET = 10,
+
+	//对象成员无key
+	PAR_MISS_KEY = 11,
+
+	//对象成员无冒号
+	PAR_MISS_COLON = 12,
+
+	//对象格式错误
+	PAR_MISS_COMMA_OR_CURLY_BRACKET = 13
 };
 
 //解析jsonAPI
@@ -90,5 +111,10 @@ void par_set_string(par_value* v, char* s);
 
 size_t par_get_array_size(const par_value* v);
 par_value* par_get_array_element(const par_value* v, size_t index);
+
+size_t par_get_object_size(const par_value* v);
+const char* par_get_object_key(const par_value* v, size_t index);
+size_t par_get_object_key_length(const par_value* v, size_t index);
+par_value* par_get_object_value(const par_value* v, size_t index);
 
 #endif

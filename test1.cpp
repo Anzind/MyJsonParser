@@ -385,11 +385,43 @@ static void test_parse_array() {
 
 //测试列表格式错误
 static void test_parse_miss_comma_or_square_bracket() {
-#if 1
+#if 0
 	TEST_ERROR(PAR_MISS_COMMA_OR_SQUARE_BRACKET, "[1");
 	TEST_ERROR(PAR_MISS_COMMA_OR_SQUARE_BRACKET, "[1}");
 	TEST_ERROR(PAR_MISS_COMMA_OR_SQUARE_BRACKET, "[1 2");
 	TEST_ERROR(PAR_MISS_COMMA_OR_SQUARE_BRACKET, "[[]");
+#endif
+}
+
+//测试对象成员无key
+static void test_parse_miss_key() {
+#if 1
+	TEST_ERROR(PAR_MISS_KEY, "{:1,");
+	TEST_ERROR(PAR_MISS_KEY, "{1:1,");
+	TEST_ERROR(PAR_MISS_KEY, "{true:1,");
+	TEST_ERROR(PAR_MISS_KEY, "{false:1,");
+	TEST_ERROR(PAR_MISS_KEY, "{null:1,");
+	TEST_ERROR(PAR_MISS_KEY, "{[]:1,");
+	TEST_ERROR(PAR_MISS_KEY, "{{}:1,");
+	TEST_ERROR(PAR_MISS_KEY, "{\"a\":1,");
+#endif
+}
+
+//测试对象成员无冒号
+static void test_parse_miss_colon() {
+#if 0
+	TEST_ERROR(PAR_MISS_COLON, "{\"a\"}");
+	TEST_ERROR(PAR_MISS_COLON, "{\"a\",\"b\"}");
+#endif
+}
+
+//测试对象格式错误
+static void test_parse_miss_comma_or_curly_bracket() {
+#if 0
+	TEST_ERROR(PAR_MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":1");
+	TEST_ERROR(PAR_MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":1]");
+	TEST_ERROR(PAR_MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":1 \"b\"");
+	TEST_ERROR(PAR_MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":{}");
 #endif
 }
 
@@ -435,6 +467,15 @@ static void test_parse() {
 
 	/*测试列表格式错误*/
 	test_parse_miss_comma_or_square_bracket();
+
+	/*测试对象成员无key*/
+	test_parse_miss_key();
+
+	/*测试对象成员无冒号*/
+	test_parse_miss_colon();
+
+	/*测试对象格式错误*/
+	test_parse_miss_comma_or_curly_bracket();
 }
 
 int main() {

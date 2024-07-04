@@ -14,22 +14,37 @@
 #if 1
 /*统一声明*/
 typedef struct par_context par_context;
+
 static void par_whitespace(par_context* c);
+
 static int par_literal(par_context* c, par_value* v, const char* cstr, par_type type);
 int par_get_boolean(const par_value* v);
+
 static int par_number(par_context* c, par_value* v);
 void par_set_number(par_value* v, double n);
 double par_get_number(const par_value* v);
+
 static char* par_string_pop(par_context* c);
 static const char* par_hex4(const char* p, unsigned* u);
 static void par_encode_utf8(par_context* c, unsigned u);
+static int par_string_raw(par_context* c, char** str);
 static int par_string(par_context* c, par_value* v);
 void par_set_string(par_value* v, char* s);
 const char* par_get_string(const par_value* v);
+
 static par_value* par_array_pop(par_context* c, size_t size);
 size_t par_get_array_size(const par_value* v);
 par_value* par_get_array_element(const par_value* v, size_t index);
 static int par_array(par_context* c, par_value* v);
+
+size_t par_get_object_size(const par_value* v);
+const char* par_get_object_key(const par_value* v, size_t index);
+size_t par_get_object_key_length(const par_value* v, size_t index);
+par_value* par_get_object_value(const par_value* v, size_t index);
+void par_set_mem_key(par_member* m, char* s);
+par_member* par_object_pop(par_context* c, size_t size);
+static int par_object(par_context* c, par_value* v);
+
 static int par_fun_value(par_context* c, par_value* v);
 int parser(par_value* v, const char* json);
 par_type par_get_type(const par_value* v);
@@ -53,6 +68,8 @@ struct par_context {
 	std::vector<char> s;
 	/*辅助数组解析的列表*/
 	std::vector<par_value> sv;
+	/*辅助对象解析的列表*/
+	std::vector<par_member> sm;
 };
 
 static void par_whitespace(par_context* c) {
@@ -246,7 +263,65 @@ static void par_encode_utf8(par_context* c, unsigned u) {
 }
 
 //解析字符串
+static int par_string_raw(par_context* c, char** str) {
+	unsigned u, u2;
+	const char* p = nullptr;
+	EXPECT(c, '\"');
+
+	p = c->json;
+	for (;;) {
+		char ch = *p++;
+		switch (ch) {
+		case '\"': {
+			//碰到了双引号，代表字符串结束
+			*str = par_string_pop(c);
+			//par_set_string(v, chs);
+			c->json = p;
+			return PAR_OK;
+		}
+		case '\\': {
+			switch (*p++) {
+			case '"': c->s.push_back('\"'); break;
+			case '\\': c->s.push_back('\\'); break;
+			case '/': c->s.push_back('/'); break;
+			case 'b': c->s.push_back('\b'); break;
+			case 'f': c->s.push_back('\f'); break;
+			case 'n': c->s.push_back('\n'); break;
+			case 'r': c->s.push_back('\r'); break;
+			case 't': c->s.push_back('\t'); break;
+			case 'u': {
+				p = par_hex4(p, &u);
+				if (!p) return PAR_INVALID_UNICODE_HEX;
+				if (u >= 0xd800 && u <= 0xdbff) {
+					if (*p++ != '\\')
+						return PAR_INVALID_UNICODE_SURROGATE;
+					if (*p++ != 'u')
+						return PAR_INVALID_UNICODE_SURROGATE;
+					p = par_hex4(p, &u2);
+					if (!p) return PAR_INVALID_UNICODE_HEX;
+					if (u2 < 0xdc00 || u2 > 0xdfff)
+						return PAR_INVALID_UNICODE_SURROGATE;
+					u = (((u - 0xd800) << 10) | (u2 - 0xdc00)) + 0x10000;
+				}
+				par_encode_utf8(c, u);
+				break;
+			}
+			default: return PAR_INVALID_STRING_ESCAPE;
+			}
+			break;
+		}
+		case '\0': return PAR_MISS_QUOTATION_MARK;
+		default: {
+			if ((unsigned char)ch < 0x20) return PAR_INVALID_STRING_CHAR;
+			c->s.push_back(ch);
+		}
+		}
+	}
+}
+
 static int par_string(par_context* c, par_value* v) {
+#if 0
+	/*该部分代码已重构，par_string_raw获取字符串*/
 	unsigned u, u2;
 	const char* p = nullptr;
 	EXPECT(c, '\"');
@@ -301,6 +376,16 @@ static int par_string(par_context* c, par_value* v) {
 		}
 		}
 	}
+#endif
+
+	int ret;
+	char* chs = nullptr;
+	
+	ret = par_string_raw(c, &chs);
+	if (ret == PAR_OK) {
+		par_set_string(v, chs);
+	}
+	return ret;
 }
 
 void par_set_string(par_value* v, char* s) {
@@ -380,6 +465,111 @@ static int par_array(par_context* c, par_value* v) {
 
 }
 
+size_t par_get_object_size(const par_value* v)
+{
+	assert(v != NULL && v->type == PAR_OBJECT);
+	return v->obj.size;
+}
+
+const char* par_get_object_key(const par_value* v, size_t index) {
+	assert(v != NULL && v->type == PAR_OBJECT && index < v->obj.size);
+	return v->obj.mem->key;
+}
+
+size_t par_get_object_key_length(const par_value* v, size_t index) {
+	assert(v != NULL && v->type == PAR_OBJECT && index < v->obj.size);
+	return v->obj.mem->key_len;
+}
+
+par_value* par_get_object_value(const par_value* v, size_t index) {
+	assert(v != NULL && v->type == PAR_OBJECT && index < v->obj.size);
+	return &v->obj.mem->value;
+}
+
+void par_set_mem_key(par_member* m, char* s) {
+	assert(m != NULL);
+	m->key = s;
+	m->key_len = std::string(s).size();
+}
+
+par_member* par_object_pop(par_context* c, size_t size) {
+	par_member* temp = new par_member[size];
+	par_member* p = temp;
+	size_t i = c->sm.size() - size;
+
+	for (; i < c->sm.size(); i++) {
+		*p++ = c->sm[i];
+	}
+	c->sm.resize(c->sm.size() - size);
+
+	return temp;
+}
+
+static int par_object(par_context* c, par_value* v) {
+	size_t size;
+	par_member m;
+	int ret;
+	EXPECT(c, '{');
+	par_whitespace(c);
+
+	if (*c->json == '}') {
+		c->json++;
+		v->type = PAR_OBJECT;
+		v->obj.mem = nullptr;
+		v->obj.size = 0;
+		return PAR_OK;
+	}
+	m.key = nullptr;
+	size = 0;
+
+	for (;;) {
+		m.value.type = PAR_NULL;
+
+		/*解析对象成员key字符串*/
+		if (*c->json != '\"') return PAR_MISS_KEY;
+		char* chs = nullptr;
+		ret = par_string_raw(c, &chs);
+		if (ret != PAR_OK) break;
+		par_set_mem_key(&m, chs);
+		par_whitespace(c);
+
+		/*检测冒号*/
+		if (*c->json == ':') {
+			c->json++;
+			par_whitespace(c);
+		}
+		else return PAR_MISS_COLON;
+
+		/*解析对象成员值*/
+		ret = par_fun_value(c, &m.value);
+		if (ret != PAR_OK) break;
+
+		c->sm.push_back(m);
+		size++;
+		m.key = nullptr;
+
+		par_whitespace(c);
+		switch (*c->json){
+		case ',': {
+			/*准备读该对象下一个成员*/
+			c->json++;
+			par_whitespace(c);
+		}
+		case '}': {
+			/*对象结束读取*/
+			c->json++;
+			v->obj.mem = par_object_pop(c, size);
+			v->obj.size = size;
+			v->type = PAR_OBJECT;
+			return PAR_OK;
+		}
+		default: return PAR_MISS_COMMA_OR_CURLY_BRACKET;
+		}
+	}
+
+	return ret;
+}
+
 static int par_fun_value(par_context* c, par_value* v) {
 	switch (*c->json) {
 	case 'n': return par_literal(c, v, "null", PAR_NULL);
@@ -387,6 +577,7 @@ static int par_fun_value(par_context* c, par_value* v) {
 	case 'f': return par_literal(c, v, "false", PAR_FALSE);
 	case '"': return par_string(c, v);
 	case '[': return par_array(c, v);
+	case '{': return par_object(c, v);
 	case '\0': return PAR_EXPECT_VALUE;
 	default: return par_number(c, v);
 	}
@@ -416,9 +607,18 @@ par_type par_get_type(const par_value* v) {
 	return v->type;
 }
 
+void par_mem_free(par_member* m) {
+	delete[] m->key;
+	m->key = nullptr;
+	m->key_len = 0;
+
+	par_free(&m->value);
+}
+
 void par_free(par_value* v) {
 	assert(v != NULL);
-	if (v->type == PAR_STRING) {
+	switch (v->type){
+	case PAR_STRING: {
 		if (v->str.len == 0) {
 			delete v->str.c_str;
 		}
@@ -426,8 +626,9 @@ void par_free(par_value* v) {
 			delete[] v->str.c_str;
 			v->str.len = 0;
 		}
+		break;
 	}
-	else if (v->type == PAR_ARRAY) {
+	case PAR_ARRAY: {
 		if (v->arr.size == 0) v->arr.elem = nullptr;
 		else {
 			for (int i = 0; i < v->arr.size; i++) {
@@ -436,6 +637,17 @@ void par_free(par_value* v) {
 			delete[] v->arr.elem;
 			v->arr.size = 0;
 		}
+		break;
+	}
+	case PAR_OBJECT: {
+		if (v->obj.size == 0) v->obj.mem = nullptr;
+		else {
+			for (int i = 0; i < v->obj.size; i++) {
+				par_mem_free(&v->obj.mem[i]);
+			}
+		}
+		break;
+	}
 	}
 	v->type = PAR_NULL;
 }
