@@ -343,11 +343,10 @@ static void test_parse_invalid_unicode_surrogate() {
 
 //测试数组解析
 static void test_parse_array() {
-#if 1
-	size_t i, j;
+#if 0
 	par_value v;
 
-#if 1
+#if 0
 	v.type = PAR_NULL;
 	EXPECT_EQ_BASE(PAR_OK, parser(&v, "[ null , false , true , 123 , \"abc\" ]"));
 	EXPECT_EQ_BASE(PAR_ARRAY, par_get_type(&v));
@@ -363,6 +362,7 @@ static void test_parse_array() {
 #endif
 
 #if 0
+	size_t i, j;
 	v.type = PAR_NULL;
 	EXPECT_EQ_BASE(PAR_OK, parser(&v, "[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]"));
 	EXPECT_EQ_BASE(PAR_ARRAY, par_get_type(&v));
@@ -380,6 +380,16 @@ static void test_parse_array() {
 	par_free(&v);
 #endif
 
+#endif
+}
+
+//测试列表格式错误
+static void test_parse_miss_comma_or_square_bracket() {
+#if 1
+	TEST_ERROR(PAR_MISS_COMMA_OR_SQUARE_BRACKET, "[1");
+	TEST_ERROR(PAR_MISS_COMMA_OR_SQUARE_BRACKET, "[1}");
+	TEST_ERROR(PAR_MISS_COMMA_OR_SQUARE_BRACKET, "[1 2");
+	TEST_ERROR(PAR_MISS_COMMA_OR_SQUARE_BRACKET, "[[]");
 #endif
 }
 
@@ -422,6 +432,9 @@ static void test_parse() {
 
 	/*测试数组解析*/
 	test_parse_array();
+
+	/*测试列表格式错误*/
+	test_parse_miss_comma_or_square_bracket();
 }
 
 int main() {

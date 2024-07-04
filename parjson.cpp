@@ -26,7 +26,7 @@ static void par_encode_utf8(par_context* c, unsigned u);
 static int par_string(par_context* c, par_value* v);
 void par_set_string(par_value* v, char* s);
 const char* par_get_string(const par_value* v);
-static par_value* par_array_pop(par_context* c);
+static par_value* par_array_pop(par_context* c, size_t size);
 size_t par_get_array_size(const par_value* v);
 par_value* par_get_array_element(const par_value* v, size_t index);
 static int par_array(par_context* c, par_value* v);
@@ -181,10 +181,10 @@ static char* par_string_pop(par_context* c) {
 	char* p = c_str;
 
 	for (int i = 0; i < len; i++) {
-		*p = c->s[i];
-		p++;
+		*p++ = c->s[i];
 	}
 	*p = '\0';
+	c->s.clear();
 
 	return c_str;
 }
@@ -316,14 +316,15 @@ const char* par_get_string(const par_value* v) {
 	return v->str.c_str;
 }
 
-static par_value* par_array_pop(par_context* c) {
-	size_t size = c->sv.size();
+static par_value* par_array_pop(par_context* c, size_t size) {
 	par_value* temp = new par_value[size];
 	par_value* p = temp;
+	size_t i = c->sv.size() - size;
 
-	for (int i = 0; i < size; i++) {
+	for (; i < c->sv.size(); i++) {
 		*p++ = c->sv[i];
 	}
+	c->sv.resize(c->sv.size() - size);
 
 	return temp;
 }
@@ -367,8 +368,8 @@ static int par_array(par_context* c, par_value* v) {
 		else if (*c->json == ']') {
 			c->json++;
 			v->type = PAR_ARRAY;
-			v->arr.size = c->sv.size();
-			v->arr.elem = par_array_pop(c);
+			v->arr.size = size;
+			v->arr.elem = par_array_pop(c, v->arr.size);
 			return PAR_OK;
 		}
 		else
@@ -429,6 +430,9 @@ void par_free(par_value* v) {
 	else if (v->type == PAR_ARRAY) {
 		if (v->arr.size == 0) v->arr.elem = nullptr;
 		else {
+			for (int i = 0; i < v->arr.size; i++) {
+				par_free(&v->arr.elem[i]);
+			}
 			delete[] v->arr.elem;
 			v->arr.size = 0;
 		}
