@@ -473,17 +473,17 @@ size_t par_get_object_size(const par_value* v)
 
 const char* par_get_object_key(const par_value* v, size_t index) {
 	assert(v != NULL && v->type == PAR_OBJECT && index < v->obj.size);
-	return v->obj.mem->key;
+	return v->obj.mem[index].key;
 }
 
 size_t par_get_object_key_length(const par_value* v, size_t index) {
 	assert(v != NULL && v->type == PAR_OBJECT && index < v->obj.size);
-	return v->obj.mem->key_len;
+	return v->obj.mem[index].key_len;
 }
 
 par_value* par_get_object_value(const par_value* v, size_t index) {
 	assert(v != NULL && v->type == PAR_OBJECT && index < v->obj.size);
-	return &v->obj.mem->value;
+	return &v->obj.mem[index].value;
 }
 
 void par_set_mem_key(par_member* m, char* s) {
@@ -554,6 +554,7 @@ static int par_object(par_context* c, par_value* v) {
 			/*准备读该对象下一个成员*/
 			c->json++;
 			par_whitespace(c);
+			break;
 		}
 		case '}': {
 			/*对象结束读取*/
