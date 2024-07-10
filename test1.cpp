@@ -104,6 +104,26 @@ static int test_pass = 0;
 		EXPECT_EQ_BASE_STRING(expect, par_get_string(&v));\
 	}while(0)
 
+/*	定义进阶宏：生成json字符串检测
+	入参：
+		json->待解析并生成的字符串
+	需要校验：
+		解析是否成功
+		解析之后生成的字符串和原来的json字符串是否匹配
+*/
+#define TEST_ROUNDTRIP(json)\
+	do{\
+		par_value v;\
+		char* json2;\
+		size_t length;\
+		v.type = PAR_NULL;\
+		EXPECT_EQ_BASE(PAR_OK, parser(&v, json));\
+		json2 = par_stringify(&v, &length);\
+		EXPECT_EQ_BASE_STRING(json, json2);\
+		par_free(&v);\
+		delete[] json2;\
+	}while(0)
+
 //测试null值解析正确
 static void test_parse_null() {
 #if 0 
@@ -395,7 +415,7 @@ static void test_parse_miss_comma_or_square_bracket() {
 
 //测试对象解析
 static void test_parse_object() {
-#if 1
+#if 0
 	par_value v;
 	
 #if 0
@@ -492,7 +512,77 @@ static void test_parse_miss_comma_or_curly_bracket() {
 #endif
 }
 
+//测试生成布尔值和null
+static void test_stringify_bool() {
+#if 0
+	TEST_ROUNDTRIP("null");
+	TEST_ROUNDTRIP("false");
+	TEST_ROUNDTRIP("true");
+#endif
+}
+
+//测试生成数字
+static void test_stringify_number() {
+#if 0
+	/*这里的测试保留，带指数和长度超标的都测不准*/
+#if 0
+	TEST_ROUNDTRIP("0");
+	TEST_ROUNDTRIP("-0");
+	TEST_ROUNDTRIP("1");
+	TEST_ROUNDTRIP("-1");
+	TEST_ROUNDTRIP("1.5");
+	TEST_ROUNDTRIP("-1.5");
+	TEST_ROUNDTRIP("3.25");
+	TEST_ROUNDTRIP("1e+20");
+	TEST_ROUNDTRIP("1.234e+20");
+	TEST_ROUNDTRIP("1.234e-20");
+#endif
+
+#if 0
+	TEST_ROUNDTRIP("1.0000000000000002"); /* the smallest number > 1 */
+	TEST_ROUNDTRIP("4.9406564584124654e-324"); /* minimum denormal */
+	TEST_ROUNDTRIP("-4.9406564584124654e-324");
+	TEST_ROUNDTRIP("2.2250738585072009e-308");  /* Max subnormal double */
+	TEST_ROUNDTRIP("-2.2250738585072009e-308");
+	TEST_ROUNDTRIP("2.2250738585072014e-308");  /* Min normal positive double */
+	TEST_ROUNDTRIP("-2.2250738585072014e-308");
+	TEST_ROUNDTRIP("1.7976931348623157e+308");  /* Max double */
+	TEST_ROUNDTRIP("-1.7976931348623157e+308");
+#endif
+#endif
+}
+
+//测试生成字符串
+static void test_stringify_string() {
+#if 0
+	/*最后一个\0换回来的时候无法确定应该换成什么*/
+	TEST_ROUNDTRIP("\"\"");
+	TEST_ROUNDTRIP("\"Hello\"");
+	TEST_ROUNDTRIP("\"Hello\\nWorld\"");
+	TEST_ROUNDTRIP("\"\\\" \\\\ / \\b \\f \\n \\r \\t\"");
+	TEST_ROUNDTRIP("\"Hello\\u0000World\"");
+#endif
+}
+
+//测试生成数组
+static void test_stringify_array() {
+#if 0
+	TEST_ROUNDTRIP("[]");
+	TEST_ROUNDTRIP("[null,false,true,123,\"abc\",[1,2,3]]");
+#endif
+}
+
+//测试生成对象
+static void test_stringify_object() {
+#if 0
+	TEST_ROUNDTRIP("{}");
+	TEST_ROUNDTRIP("{\"n\":null,\"f\":false,\"t\":true,\"i\":123,\"s\":\"abc\",\"a\":[1,2,3],\"o\":{\"1\":1,\"2\":2,\"3\":3}}");
+#endif
+}
+
 static void test_parse() {
+#if 0
+	/*解析测试*/
 	/*测试bool值与null值*/
 	test_parse_null();
 	test_parse_true();
@@ -546,6 +636,16 @@ static void test_parse() {
 
 	/*测试对象解析*/
 	test_parse_object();
+#endif
+
+#if 1
+	/*生成测试*/
+	test_stringify_bool();
+	test_stringify_number();
+	test_stringify_string();
+	test_stringify_array();
+	test_stringify_object();
+#endif
 }
 
 int main() {

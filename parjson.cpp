@@ -49,6 +49,13 @@ static int par_fun_value(par_context* c, par_value* v);
 int parser(par_value* v, const char* json);
 par_type par_get_type(const par_value* v);
 void par_free(par_value* v);
+
+static std::string par_stringify_number(const double* num);
+static void par_stringify_string(par_context* c, const char* s, size_t len);
+static void par_stringify_array(par_context* c, const par_value* v, size_t len);
+static void par_stringify_object(par_context* c, par_member* m, size_t len);
+static void par_stringify_value(par_context* c, const par_value* v);
+char* par_stringify(const par_value* v, size_t* length);
 #endif
 
 #define EXPECT(c,ch) \
@@ -653,3 +660,154 @@ void par_free(par_value* v) {
 	v->type = PAR_NULL;
 }
 
+//生成数字
+static std::string par_stringify_number(const double* num) {
+	std::string str = std::to_string(*num);
+	str.erase(str.find_last_not_of('0') + 1, std::string::npos);
+	if (str.back() == '.') str.pop_back();
+
+	return str;
+}
+
+//生成字符串
+static void par_stringify_string(par_context* c, const char* s, size_t len) {
+	size_t i;
+	std::string str;
+
+	assert(s != NULL);
+	c->s.push_back('"');
+	for (i = 0; i < len; i++) {
+		unsigned char ch = (unsigned char)s[i];
+		/*用switch处理转义字符*/
+		switch (ch)
+		{
+		case '\"': {
+			str = "\\\"";
+			c->s.insert(c->s.end(), str.begin(), str.end());
+			break;
+		}
+		case '\\': {
+			str = "\\\\";
+			c->s.insert(c->s.end(), str.begin(), str.end());
+			break;
+		}
+		case '\b': {
+			str = "\\b";
+			c->s.insert(c->s.end(), str.begin(), str.end());
+			break;
+		}
+		case '\f': {
+			str = "\\f";
+			c->s.insert(c->s.end(), str.begin(), str.end());
+			break;
+		}
+		case '\n': {
+			str = "\\n";
+			c->s.insert(c->s.end(), str.begin(), str.end());
+			break;
+		}
+		case '\r': {
+			str = "\\r";
+			c->s.insert(c->s.end(), str.begin(), str.end());
+			break;
+		}
+		case '\t': {
+			str = "\\t";
+			c->s.insert(c->s.end(), str.begin(), str.end());
+			break;
+		}
+		case '\0': {
+			str = "\\0";
+			c->s.insert(c->s.end(), str.begin(), str.end());
+			break;
+		}
+		default: {
+			if (ch < 0x20) {
+				str = "\\u%04x";
+				c->s.insert(c->s.end(), str.begin(), str.end());
+			}
+			else c->s.push_back(ch);
+		}
+		}
+	}
+	c->s.push_back('"');
+}
+
+//生成数组
+static void par_stringify_array(par_context* c, const par_value* v, size_t len) {
+	size_t i;
+	c->s.push_back('[');
+	for (i = 0; i < len; i++) {
+		if (i > 0) c->s.push_back(',');
+		par_stringify_value(c, &v[i]);
+	}
+	c->s.push_back(']');
+}
+
+//生成对象
+static void par_stringify_object(par_context* c, par_member* m, size_t len) {
+	size_t i;
+	c->s.push_back('{');
+	for (i = 0; i < len; i++) {
+		par_member* mptr = &m[i];
+		if (i > 0) c->s.push_back(',');
+		par_stringify_string(c, mptr->key, mptr->key_len);
+		c->s.push_back(':');
+		par_stringify_value(c, &mptr->value);
+	}
+	c->s.push_back('}');
+}
+
+//生成值
+static void par_stringify_value(par_context* c, const par_value* v) {
+	std::string str;
+
+	switch (v->type)
+	{
+	case PAR_NULL: {
+		str = "null";
+		c->s.insert(c->s.end(), str.begin(), str.end());
+		break;
+	}
+	case PAR_TRUE: {
+		str = "true";
+		c->s.insert(c->s.end(), str.begin(), str.end());
+		break;
+	}
+	case PAR_FALSE: {
+		str = "false";
+		c->s.insert(c->s.end(), str.begin(), str.end());
+		break;
+	}
+	case PAR_NUMBER: {
+		str = par_stringify_number(&v->num);
+		c->s.insert(c->s.end(), str.begin(), str.end());
+		break;
+	}
+	case PAR_STRING: {
+		par_stringify_string(c, v->str.c_str, v->str.len);
+		break;
+	}
+	case PAR_ARRAY: {
+		par_stringify_array(c, v->arr.elem, v->arr.size);
+		break;
+	}
+	case PAR_OBJECT: {
+		par_stringify_object(c, v->obj.mem, v->obj.size);
+		break;
+	}
+	default: assert(0 && "invalid type");
+	}
+}
+
+//读数据生成json字符串
+char* par_stringify(const par_value* v, size_t* length) {
+	par_context c;
+	assert(v != NULL);
+	c.s.reserve(PAR_SIRINGIGY_INIT_SIZE);
+	par_stringify_value(&c, v);
+	*length = c.s.size();
+
+	char* json_str = par_string_pop(&c);
+	return json_str;
+}

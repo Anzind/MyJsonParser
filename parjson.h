@@ -4,6 +4,10 @@
 #include<iostream>
 #include<string>
 
+#ifndef PAR_SIRINGIGY_INIT_SIZE
+#define PAR_SIRINGIGY_INIT_SIZE 256
+#endif
+
 //json类型的枚举
 typedef enum {
 	PAR_NULL = 0,
@@ -117,4 +121,5 @@ const char* par_get_object_key(const par_value* v, size_t index);
 size_t par_get_object_key_length(const par_value* v, size_t index);
 par_value* par_get_object_value(const par_value* v, size_t index);
 
+char* par_stringify(const par_value* v, size_t* length);
 #endif
